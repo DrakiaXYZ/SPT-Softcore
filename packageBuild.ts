@@ -28,17 +28,20 @@ console.log("Previous build files deleted.");
 const ignoreList = [
     "node_modules/!(json5)", // Instead of excluding the entire node_modules directory, allow two node modules.
     "src/**/*.js",
+    "docs/",
     "types/",
     ".git/",
     ".gitea/",
     ".eslintignore",
     ".eslintrc.json",
     ".gitignore",
+    ".gitattributes",
     ".DS_Store",
     "packageBuild.ts",
     "mod.code-workspace",
     "package-lock.json",
-    "tsconfig.json"
+    "tsconfig.json",
+    "src/.prettierrc"
 ];
 const exclude = glob.sync(`{${ignoreList.join(",")}}`, { realpath: true, dot: true });
 
