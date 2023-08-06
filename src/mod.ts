@@ -997,16 +997,16 @@ class Mod implements IPostDBLoadMod {
 				// Never again I'll see an unlootable medcase in 314...
 				for (const itemID in items) {
 					const item = items[itemID]
-					if (item._type == "Item") {
-						if (JSON.stringify(item).indexOf("ExcludedFilter") > -1) {
+					if (item._type == "Item" && item._props?.Grids?.length > 0) {
+						if (JSON.stringify(item._props.Grids[0]).indexOf("ExcludedFilter") > -1) {
 							// JS safety tricks strike again.
 							// console.log("Key Found");
 							// log(getItemName(item._id))
 							let filtered
 							try {
 								// Safety level 2
-								filtered = item._props?.Grids[0]?._props?.filters[0]?.ExcludedFilter
-								if (filtered.includes(Items.CONTAINER_MEDICINE)) {
+								filtered = item._props.Grids[0]._props?.filters[0]?.ExcludedFilter
+								if (filtered?.includes(Items.CONTAINER_MEDICINE)) {
 									// log(getItemName(item._id))
 									item._props.Grids[0]._props.filters[0].ExcludedFilter = []
 								}
@@ -2816,11 +2816,11 @@ class Mod implements IPostDBLoadMod {
 			{
 				if (item._tpl != resultItem) continue;
 
-				for (const scheme of trader.barder_schemes[item._id][0])
+				for (const scheme of trader.assort.barter_scheme[item._id][0])
 				{
 					if (scheme._tpl == currency)
 					{
-						return scheme;
+						return trader.assort.barter_scheme[item._id][0];
 					}
 				}
 			}
