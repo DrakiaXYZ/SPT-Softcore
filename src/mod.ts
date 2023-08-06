@@ -1,4 +1,7 @@
 import { DependencyContainer } from "tsyringe"
+import * as fs from 'fs';
+import * as path from 'path';
+import * as json5 from 'json5';
 
 import { IPostDBLoadMod } from "@spt-aki/models/external/IPostDBLoadMod"
 import { DatabaseServer } from "@spt-aki/servers/DatabaseServer"
@@ -10,7 +13,11 @@ import { IRagfairConfig } from "@spt-aki/models/spt/config/IRagfairConfig"
 import { IHideoutConfig } from "@spt-aki/models/spt/config/IHideoutConfig"
 import { IInsuranceConfig } from "@spt-aki/models/spt/config/IInsuranceConfig"
 import { IScavCaseConfig } from "@spt-aki/models/spt/config/IScavCaseConfig"
-// import { IHideoutProduction } from "@spt-aki/models/eft/hideout/IHideoutProduction"
+import { Traders } from "@spt-aki/models/enums/Traders"
+import { Money } from "@spt-aki/models/enums/Money"
+import { BaseClasses } from "@spt-aki/models/enums/BaseClasses"
+import { HideoutAreas } from "@spt-aki/models/enums/HideoutAreas"
+import { IHideoutProduction } from "@spt-aki/models/eft/hideout/IHideoutProduction";
 
 // import { LogTextColor } from "@spt-aki/models/spt/logging/LogTextColor"
 // import { LogBackgroundColor } from "@spt-aki/models/spt/logging/LogBackgroundColor"
@@ -22,12 +29,17 @@ import { IScavCaseConfig } from "@spt-aki/models/spt/config/IScavCaseConfig"
 import { itemBaseClasses } from "./itemBaseClasses"
 import { BSGblacklist } from "./BSGblacklist"
 import { scavcaseWhitelist, scavcaseItemBlacklist } from "./scavcaseLists"
+//import { Items } from './items'
+import * as Items from './items.json';
 
-import config from "../config/config.json"
+//const fleaListingsWhitelist = require("../config/fleaListingsWhitelist.ts") // this Node.js module/require shit is bullshit.
+//const fleaBarterRequestsWhitelist = require("../config/fleaBarterRequestsWhitelist.ts") // why I can't use import in config directory? Anyway, is there any alternative to JSON data storage? THIS is the only way to save commented data?!
+//const fleaItemsWhiteList = require("../config/fleaItemsWhitelist.ts")
 
-const fleaListingsWhitelist = require("../config/fleaListingsWhitelist.ts") // this Node.js module/require shit is bullshit.
-const fleaBarterRequestsWhitelist = require("../config/fleaBarterRequestsWhitelist.ts") // why I can't use import in config directory? Anyway, is there any alternative to JSON data storage? THIS is the only way to save commented data?!
-const fleaItemsWhiteList = require("../config/fleaItemsWhitelist.ts")
+const fleaListingsWhitelist = loadConfig("../config/fleaListingsWhitelist.json5");
+const fleaBarterRequestsWhitelist = loadConfig("../config/fleaBarterRequestsWhitelist.json5");
+const fleaItemsWhiteList = loadConfig("../config/fleaItemsWhitelist.json5");
+const config = loadConfig("../config/config.json5");
 
 const debug = false // [Debug] Debug!
 
@@ -48,17 +60,19 @@ class Mod implements IPostDBLoadMod {
 		const hideoutConfig = configServer.getConfig<IHideoutConfig>(ConfigTypes.HIDEOUT)
 		const insuranceConfig = configServer.getConfig<IInsuranceConfig>(ConfigTypes.INSURANCE)
 		const scavcaseConfig = configServer.getConfig<IScavCaseConfig>(ConfigTypes.SCAVCASE)
-		const prapor = tables.traders["54cb50c76803fa8b248b4571"]
-		const therapist = tables.traders["54cb57776803fa99248b456e"]
-		const ragman = tables.traders["5ac3b934156ae10c4430e83c"]
-		const jaeger = tables.traders["5c0647fdd443bc2504c2d371"]
-		const mechanic = tables.traders["5a7c2eca46aef81a7ca2145d"]
-		const peacekeeper = tables.traders["5935c25fb3acc3127c3d8cd9"]
-		const skier = tables.traders["58330581ace78e27b8b10cee"]
+		const prapor = tables.traders[Traders.PRAPOR]
+		const therapist = tables.traders[Traders.THERAPIST]
+		const ragman = tables.traders[Traders.RAGMAN]
+		const jaeger = tables.traders[Traders.JAEGER]
+		const mechanic = tables.traders[Traders.MECHANIC]
+		const peacekeeper = tables.traders[Traders.PEACEKEEPER]
+		const skier = tables.traders[Traders.SKIER]
 		const traderlist = [prapor, therapist, ragman, jaeger, mechanic, peacekeeper, skier]
 		const profileList = ["Standard", "Left Behind", "Prepare To Escape", "Edge Of Darkness", "SPT Zero to hero"]
 
-		const euroPrice = handbook.Items.find((x) => x.Id == "569668774bdc2da2298b4568").Price
+		const euroPrice = handbook.Items.find((x) => x.Id == Money.EUROS).Price
+
+		const collectorQuest = "5c51aac186f77432ea65c552";
 
 		// Noice.
 		const fleaBarterRequestBlacklist = itemBaseClasses.filter((x) => !fleaBarterRequestsWhitelist.includes(x))
@@ -77,239 +91,264 @@ class Mod implements IPostDBLoadMod {
 		if (config.SecureContainersOptions.enabled) {
 			if (config.SecureContainersOptions.Bigger_Containers.enabled) {
 				// Waist Pouch
-				items["5732ee6a24597719ae0c0281"]._props.Grids[0]._props.cellsV = 2
-				items["5732ee6a24597719ae0c0281"]._props.Grids[0]._props.cellsH = 4
+				items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.cellsV = 2
+				items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.cellsH = 4
 
 				// Secure container Alpha
-				items["544a11ac4bdc2d470e8b456a"]._props.Grids[0]._props.cellsV = 3
-				items["544a11ac4bdc2d470e8b456a"]._props.Grids[0]._props.cellsH = 3
+				items[Items.SECURE_ALPHA]._props.Grids[0]._props.cellsV = 3
+				items[Items.SECURE_ALPHA]._props.Grids[0]._props.cellsH = 3
 
 				// Secure container Beta
-				items["5857a8b324597729ab0a0e7d"]._props.Grids[0]._props.cellsV = 3
-				items["5857a8b324597729ab0a0e7d"]._props.Grids[0]._props.cellsH = 4
+				items[Items.SECURE_BETA]._props.Grids[0]._props.cellsV = 3
+				items[Items.SECURE_BETA]._props.Grids[0]._props.cellsH = 4
 
 				// Secure container Epsilon
-				items["59db794186f77448bc595262"]._props.Grids[0]._props.cellsV = 3
-				items["59db794186f77448bc595262"]._props.Grids[0]._props.cellsH = 5
+				items[Items.SECURE_EPSILON]._props.Grids[0]._props.cellsV = 3
+				items[Items.SECURE_EPSILON]._props.Grids[0]._props.cellsH = 5
 
 				// Secure container Gamma
-				items["5857a8bc2459772bad15db29"]._props.Grids[0]._props.cellsV = 4
-				items["5857a8bc2459772bad15db29"]._props.Grids[0]._props.cellsH = 5
+				items[Items.SECURE_GAMMA]._props.Grids[0]._props.cellsV = 4
+				items[Items.SECURE_GAMMA]._props.Grids[0]._props.cellsH = 5
 
 				// Secure container Kappa
-				items["5c093ca986f7740a1867ab12"]._props.Grids[0]._props.cellsV = 5
-				items["5c093ca986f7740a1867ab12"]._props.Grids[0]._props.cellsH = 5
+				items[Items.SECURE_KAPPA]._props.Grids[0]._props.cellsV = 5
+				items[Items.SECURE_KAPPA]._props.Grids[0]._props.cellsH = 5
 			}
 
 			if (config.SecureContainersOptions.Progressive_Containers.enabled) {
 				try {
 					// It seems Waist pouch does not protect againt in raid restrictions, so need to remove them alltogether.
 
-					// items["5857a8bc2459772bad15db29"]._props.Grids[0]._props.filters[0].Filter.forEach(x => log(getItemName(x)))
-					// items["5732ee6a24597719ae0c0281"]._props.Grids[0]._props.filters[0].Filter.forEach(x => log(getItemName(x)))
+					// items[Items.SECURE_GAMMA]._props.Grids[0]._props.filters[0].Filter.forEach(x => log(getItemName(x)))
+					// items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.filters[0].Filter.forEach(x => log(getItemName(x)))
 
 					// log(`---`)
-					// items["5857a8bc2459772bad15db29"]._props.Grids[0]._props.filters[0].ExcludedFilter.forEach(x => log(getItemName(x)))
-					// items["5732ee6a24597719ae0c0281"]._props.Grids[0]._props.filters[0].ExcludedFilter.forEach(x => log(getItemName(x)))
+					// items[Items.SECURE_GAMMA]._props.Grids[0]._props.filters[0].ExcludedFilter.forEach(x => log(getItemName(x)))
+					// items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.filters[0].ExcludedFilter.forEach(x => log(getItemName(x)))
 
 					try {
-						items["5732ee6a24597719ae0c0281"]._props.CantRemoveFromSlotsDuringRaid[0] = "SecuredContainer"
+						items[Items.SECURE_WAIST_POUCH]._props.CantRemoveFromSlotsDuringRaid[0] = "SecuredContainer"
 					} catch (error) {
 						logger.warning(`\nAdjusting Waist Pouch CantRemoveFromSlotsDuringRaid failed because of another mod. Send bug report. Continue safely.`)
 						log(error)
 					}
 					try {
-						items["5732ee6a24597719ae0c0281"]._props.Grids[0]._props.filters = items["5857a8bc2459772bad15db29"]._props.Grids[0]._props.filters
+						items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.filters = items[Items.SECURE_GAMMA]._props.Grids[0]._props.filters
 					} catch (error) {
 						logger.warning(`\nAdjusting Waist Pouch Grids[0]._props.filters failed because of another mod. Send bug report. Continue safely.`)
 						log(error)
 					}
 
 					for (const profile of profileList) {
-						tables.templates.profiles[profile].bear.character.Inventory.items.find((x) => x.slotId == "SecuredContainer")._tpl = "5732ee6a24597719ae0c0281"
-						tables.templates.profiles[profile].usec.character.Inventory.items.find((x) => x.slotId == "SecuredContainer")._tpl = "5732ee6a24597719ae0c0281"
+						tables.templates.profiles[profile].bear.character.Inventory.items.find((x) => x.slotId == "SecuredContainer")._tpl = Items.SECURE_WAIST_POUCH
+						tables.templates.profiles[profile].usec.character.Inventory.items.find((x) => x.slotId == "SecuredContainer")._tpl = Items.SECURE_WAIST_POUCH
 					}
 
 					// Beta container from PK "removal"
-					peacekeeper.assort.barter_scheme["63d385c6b3eba6c95d0efa0a"][0].forEach((x) => (x.count = 10))
+					const betaBarterId = peacekeeper.assort.items.find((x) => x._tpl == Items.SECURE_BETA)._id;
+					peacekeeper.assort.barter_scheme[betaBarterId][0].forEach((x) => (x.count = 10))
 
-					const Alpha = {
+					const alphaCase: IHideoutProduction = {
 						_id: "63da4dbee8fa73e22500001a",
 
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requirements: [
-							{ areaType: 10, requiredLevel: 1, type: "Area" },
 							{
-								templateId: "567143bf4bdc2d1a0f8b4567",
+								areaType: HideoutAreas.WORKBENCH,
+								requiredLevel: 1,
+								type: "Area"
+							},
+							{
+								templateId: Items.LOCKABLECONTAINER_PISTOL_CASE,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "5783c43d2459774bbe137486",
+								templateId: Items.CONTAINER_WALLET,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "5c093e3486f77430cb02e593",
+								templateId: Items.CONTAINER_DOGTAGS,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "590c621186f774138d11ea29",
+								templateId: Items.INFO_FLASH_DRIVE,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 						],
 						productionTime: 5600,
-						boosters: null,
-						endProduct: "544a11ac4bdc2d470e8b456a",
+						endProduct: Items.SECURE_ALPHA,
 						continuous: false,
 						count: 1,
 						productionLimitCount: 0,
+						isEncoded: false,
+						locked: false,
+						needFuelForAllProductionTime: false
 					}
-					const Beta = {
+					const betaCase: IHideoutProduction = {
 						_id: "63da4dbee8fa73e22500001b",
 
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requirements: [
-							{ areaType: 10, requiredLevel: 1, type: "Area" },
 							{
-								templateId: "544a11ac4bdc2d470e8b456a",
+								areaType: HideoutAreas.WORKBENCH,
+								requiredLevel: 1,
+								type: "Area"
+							},
+							{
+								templateId: Items.SECURE_ALPHA,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "5aafbde786f774389d0cbc0f",
+								templateId: Items.CONTAINER_AMMO,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "590c60fc86f77412b13fddcf",
+								templateId: Items.CONTAINER_DOCS,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "62a0a16d0b9d3c46de5b6e97",
+								templateId: Items.INFO_MFD,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 						],
 						productionTime: 10800,
-						boosters: null,
-						endProduct: "5857a8b324597729ab0a0e7d",
+						endProduct: Items.SECURE_BETA,
 						continuous: false,
 						count: 1,
 						productionLimitCount: 0,
+						isEncoded: false,
+						locked: false,
+						needFuelForAllProductionTime: false
 					}
-					const Epsilon = {
+					const epsilonCase: IHideoutProduction = {
 						_id: "63da4dbee8fa73e22500001c",
 
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requirements: [
-							{ areaType: 10, requiredLevel: 2, type: "Area" },
 							{
-								templateId: "5857a8b324597729ab0a0e7d",
+								areaType: HideoutAreas.WORKBENCH,
+								requiredLevel: 2,
+								type: "Area"
+							},
+							{
+								templateId: Items.SECURE_BETA,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "5c127c4486f7745625356c13",
+								templateId: Items.CONTAINER_MAGAZINES,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "59fafd4b86f7745ca07e1232",
+								templateId: Items.CONTAINER_KEY_TOOL,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "619cbf9e0a7c3a1a2731940a",
+								templateId: Items.CONTAINER_KEYCARDS,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "61bf7c024770ee6f9c6b8b53",
+								templateId: Items.INFO_SMT,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 						],
 						productionTime: 35000,
-						boosters: null,
-						endProduct: "59db794186f77448bc595262",
+						endProduct: Items.SECURE_EPSILON,
 						continuous: false,
 						count: 1,
 						productionLimitCount: 0,
+						isEncoded: false,
+						locked: false,
+						needFuelForAllProductionTime: false
 					}
-					const Gamma = {
+					const gammaCase: IHideoutProduction = {
 						_id: "63da4dbee8fa73e22500001d",
 
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requirements: [
-							{ areaType: 10, requiredLevel: 3, type: "Area" },
 							{
-								templateId: "59db794186f77448bc595262",
+								areaType: HideoutAreas.WORKBENCH,
+								requiredLevel: 3,
+								type: "Area"
+							},
+							{
+								templateId: Items.SECURE_EPSILON,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 
 							{
-								templateId: "5e2af55f86f7746d4159f07c",
+								templateId: Items.CONTAINER_GRENADES,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "59fb016586f7746d0d4b423a",
+								templateId: Items.CONTAINER_MONEY,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "5d235bb686f77443f4331278",
+								templateId: Items.CONTAINER_SICC,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "619cbf7d23893217ec30b689",
+								templateId: Items.CONTAINER_INJECTORS,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 							{
-								templateId: "6389c7750ef44505c87f5996",
+								templateId: Items.BARTER_MB,
 								count: 2,
 								isFunctional: false,
 								type: "Item",
 							},
 						],
 						productionTime: 61200,
-						boosters: null,
-						endProduct: "5857a8bc2459772bad15db29",
+						endProduct: Items.SECURE_GAMMA,
 						continuous: false,
 						count: 1,
 						productionLimitCount: 0,
+						isEncoded: false,
+						locked: false,
+						needFuelForAllProductionTime: false
 					}
 
-					tables.hideout.production.push(Alpha, Beta, Epsilon, Gamma)
+					tables.hideout.production.push(alphaCase, betaCase, epsilonCase, gammaCase)
 
 					if (config.SecureContainersOptions.Progressive_Containers.Collector_Quest_Redone.enabled == true) {
 						// Add the surprise
-						tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForFinish.push({
+						tables.templates.quests[collectorQuest].conditions.AvailableForFinish.push({
 							_parent: "HandoverItem",
 							_props: {
 								dogtagLevel: 0,
@@ -321,7 +360,7 @@ class Mod implements IPostDBLoadMod {
 								isEncoded: false,
 								onlyFoundInRaid: false,
 								dynamicLocale: false,
-								target: ["5857a8bc2459772bad15db29"],
+								target: [Items.SECURE_GAMMA],
 								value: 2,
 								visibilityConditions: [],
 							},
@@ -331,12 +370,12 @@ class Mod implements IPostDBLoadMod {
 						tables.locales.global["ru"]["639135534b15ca31f76bc319"] = "Передать носитель" // Тут нужен только фикс для русского, для всех остальных языков звучит как "Hand over the storage device"
 
 						// Remove level req from finish
-						tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForFinish = tables.templates.quests[
-							"5c51aac186f77432ea65c552"
+						tables.templates.quests[collectorQuest].conditions.AvailableForFinish = tables.templates.quests[
+							collectorQuest
 						].conditions.AvailableForFinish.filter((x) => x._parent != "Level")
 
 						// Start condition
-						tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForStart = [
+						tables.templates.quests[collectorQuest].conditions.AvailableForStart = [
 							{
 								_parent: "Level",
 								_props: {
@@ -387,7 +426,7 @@ class Mod implements IPostDBLoadMod {
 							}
 							const itemInHandbook = getItemInHandbook(item._id)
 
-							if (item._parent == "543be5cb4bdc2deb348b4568") {
+							if (item._parent == BaseClasses.AMMO_BOX) {
 								try {
 									// Ammo boxes price patch/fix, their data in handbook is always 1k, this makes them valued as ammo*count they contain.
 									const count = item._props.StackSlots[0]._max_count
@@ -471,7 +510,7 @@ class Mod implements IPostDBLoadMod {
 									count: 1,
 									isEncoded: false,
 									isFunctional: false,
-									templateId: "62a09f32621468534a797acb", // Pevko, T1 62a09f32621468534a797acb
+									templateId: Items.DRINK_PEVKO,
 									type: "Item",
 								},
 							],
@@ -498,7 +537,7 @@ class Mod implements IPostDBLoadMod {
 									count: 1,
 									isEncoded: false,
 									isFunctional: false,
-									templateId: "5d40407c86f774318526545a", // Vodka T2 5d40407c86f774318526545a
+									templateId: Items.DRINK_VODKA,
 									type: "Item",
 								},
 							],
@@ -526,7 +565,7 @@ class Mod implements IPostDBLoadMod {
 									count: 1,
 									isEncoded: false,
 									isFunctional: false,
-									templateId: "5d403f9186f7743cac3f229b", // Whisky T3 5d403f9186f7743cac3f229b
+									templateId: Items.DRINK_WHISKEY,
 									type: "Item",
 								},
 							],
@@ -553,7 +592,7 @@ class Mod implements IPostDBLoadMod {
 									count: 1,
 									isEncoded: false,
 									isFunctional: false,
-									templateId: "5d1b376e86f774252519444e", // Moonshine 5d1b376e86f774252519444e
+									templateId: Items.DRINK_MOONSHINE,
 									type: "Item",
 								},
 							],
@@ -580,7 +619,7 @@ class Mod implements IPostDBLoadMod {
 									count: 1,
 									isEncoded: false,
 									isFunctional: false,
-									templateId: "5c12613b86f7743bbe2c3f76", // Intel, 5c12613b86f7743bbe2c3f76
+									templateId: Items.INFO_INTELLIGENCE,
 									type: "Item",
 								},
 							],
@@ -599,7 +638,7 @@ class Mod implements IPostDBLoadMod {
 						tables.hideout.scavcase.forEach((x) => {
 							if (debug) {
 								x.ProductionTime = 1
-								x.Requirements[0].templateId = "5449016a4bdc2d6f028b456f"
+								x.Requirements[0].templateId = Money.ROUBLES
 							} else {
 								x.ProductionTime /= config.ScavCaseOptions.FasterScavcase.SpeedMultiplier
 							}
@@ -704,29 +743,19 @@ class Mod implements IPostDBLoadMod {
 			if (config.HideoutOptions.StashOptions.enabled) {
 				// Fix for ADHD.
 
-				// stash area id 5d484fc0654e76006657e0ab
-				// "_id": "566abbc34bdc2d92178b4576",
-				// "_name": "Standard stash 10x28",
-				// "_id": "5811ce572459770cba1a34ea",
-				// "_name": "Left Behind stash 10x38",
-				// "_id": "5811ce662459770f6f490f32",
-				// "_name": "Prepare for escape stash 10x48",
-				// "_id": "5811ce772459770e9e5f9532",
-				// "_name": "Edge of darkness stash 10x68",
-
 				if (config.HideoutOptions.StashOptions.BiggerStash.enabled) {
 					try {
-						items["566abbc34bdc2d92178b4576"]._props.Grids[0]._props.cellsV = 50
-						items["5811ce572459770cba1a34ea"]._props.Grids[0]._props.cellsV = 100
-						items["5811ce662459770f6f490f32"]._props.Grids[0]._props.cellsV = 150
-						items["5811ce772459770e9e5f9532"]._props.Grids[0]._props.cellsV = 200
+						items[Items.STASH_STANDARD]._props.Grids[0]._props.cellsV = 50
+						items[Items.STASH_LEFTBEHIND]._props.Grids[0]._props.cellsV = 100
+						items[Items.STASH_PREPAREFORESCAPE]._props.Grids[0]._props.cellsV = 150
+						items[Items.STASH_EDGEOFDARKNESS]._props.Grids[0]._props.cellsV = 200
 					} catch (error) {
 						logger.warning(`\nHideoutOptions.StashOptions.BiggerStash failed because of another mod. Send bug report. Continue safely.`)
 						log(error)
 					}
 				}
 
-				const originalStages = tables.hideout.areas.find((x) => x._id == "5d484fc0654e76006657e0ab").stages
+				const originalStages = tables.hideout.areas.find((x) => x.type == HideoutAreas.STASH).stages
 
 				for (const stage in originalStages) {
 					if (config.HideoutOptions.StashOptions.Easier_Loyalty.enabled == true) {
@@ -745,7 +774,7 @@ class Mod implements IPostDBLoadMod {
 					if (config.HideoutOptions.StashOptions.Less_Currency_For_Construction.enabled == true) {
 						try {
 							originalStages[stage].requirements
-								.filter((x) => x.templateId == "5449016a4bdc2d6f028b456f" || x.templateId == "569668774bdc2da2298b4568")
+								.filter((x) => x.templateId == Money.ROUBLES || x.templateId == Money.EUROS)
 								.forEach((x) => {
 									x.count /= 10
 								})
@@ -757,7 +786,7 @@ class Mod implements IPostDBLoadMod {
 				}
 
 				try {
-					tables.hideout.areas.find((x) => x._id == "5d484fc0654e76006657e0ab").stages = originalStages
+					tables.hideout.areas.find((x) => x.type == HideoutAreas.STASH).stages = originalStages
 				} catch (error) {
 					logger.warning(
 						`\nHideoutOptions.StashOptions (Easier_Loyalty or Less_Currency_For_Construction) failed because of another mod. Send bug report. Continue safely.`
@@ -769,23 +798,23 @@ class Mod implements IPostDBLoadMod {
 					const basicStashBonuses = [
 						{
 							type: "StashSize",
-							templateId: "566abbc34bdc2d92178b4576",
+							templateId: Items.STASH_STANDARD,
 						},
 					]
 					for (const profile of profileList) {
 						try {
-							tables.templates.profiles[profile].bear.character.Hideout.Areas.find((x) => x.type == "3").level = 1
-							tables.templates.profiles[profile].usec.character.Hideout.Areas.find((x) => x.type == "3").level = 1
+							tables.templates.profiles[profile].bear.character.Hideout.Areas.find((x) => x.type == HideoutAreas.STASH).level = 1
+							tables.templates.profiles[profile].usec.character.Hideout.Areas.find((x) => x.type == HideoutAreas.STASH).level = 1
 
 							tables.templates.profiles[profile].bear.character.Inventory.items
-								.filter((x) => x._tpl == "5811ce572459770cba1a34ea" || x._tpl == "5811ce662459770f6f490f32" || x._tpl == "5811ce772459770e9e5f9532")
+								.filter((x) => x._tpl == Items.STASH_LEFTBEHIND || x._tpl == Items.STASH_PREPAREFORESCAPE || x._tpl == Items.STASH_EDGEOFDARKNESS)
 								.forEach((element) => {
-									element._tpl = "566abbc34bdc2d92178b4576"
+									element._tpl = Items.STASH_STANDARD
 								})
 							tables.templates.profiles[profile].usec.character.Inventory.items
-								.filter((x) => x._tpl == "5811ce572459770cba1a34ea" || x._tpl == "5811ce662459770f6f490f32" || x._tpl == "5811ce772459770e9e5f9532")
+								.filter((x) => x._tpl == Items.STASH_LEFTBEHIND || x._tpl == Items.STASH_PREPAREFORESCAPE || x._tpl == Items.STASH_EDGEOFDARKNESS)
 								.forEach((element) => {
-									element._tpl = "566abbc34bdc2d92178b4576"
+									element._tpl = Items.STASH_STANDARD
 								})
 							tables.templates.profiles[profile].bear.character.Bonuses = basicStashBonuses
 							tables.templates.profiles[profile].usec.character.Bonuses = basicStashBonuses
@@ -801,20 +830,20 @@ class Mod implements IPostDBLoadMod {
 				const endProduct = tables.hideout.production[prod].endProduct
 				const productionTime = tables.hideout.production[prod].productionTime
 				if (
-					(endProduct == "5d1b376e86f774252519444e" || endProduct == "5d1b33a686f7742523398398") &&
+					(endProduct == Items.DRINK_MOONSHINE || endProduct == Items.DRINK_SUPERWATER) &&
 					config.HideoutOptions.Faster_Moonshine_and_Purified_Water_Production.enabled
 				) {
 					// superwater and moonshine
 					tables.hideout.production[prod].productionTime = Math.round(
 						productionTime / config.HideoutOptions.Faster_Moonshine_and_Purified_Water_Production.Base_Moonshine_And_Water_Time_Multiplier
 					)
-				} else if (endProduct == "59faff1d86f7746c51718c9c" && config.HideoutOptions.Faster_Bitcoin_Farming.enabled == true) {
+				} else if (endProduct == Items.BARTER_02BTC && config.HideoutOptions.Faster_Bitcoin_Farming.enabled == true) {
 					// bitcoins
 					tables.hideout.production[prod].productionTime = Math.round(
 						productionTime / config.HideoutOptions.Faster_Bitcoin_Farming.Base_Bitcoin_Time_Multiplier
 					)
 					if (config.HideoutOptions.Faster_Bitcoin_Farming.Revert_Bitcoin_Price_To_v012 == true) {
-						tables.templates.handbook.Items.find((x) => x.Id == "59faff1d86f7746c51718c9c").Price = 100000
+						tables.templates.handbook.Items.find((x) => x.Id == Items.BARTER_02BTC).Price = 100000
 					}
 				} else if (config.HideoutOptions.Faster_Crafting_Time.enabled) {
 					// all other crafts
@@ -901,20 +930,20 @@ class Mod implements IPostDBLoadMod {
 
 			if (config.OtherTweaks.Bigger_Hideout_Containers.enabled) {
 				try {
-					tables.templates.items["5aafbcd986f7745e590fff23"]._props.Grids[0]._props.cellsH = 10 // Medicine case 7x7
-					tables.templates.items["5aafbcd986f7745e590fff23"]._props.Grids[0]._props.cellsV = 10
+					tables.templates.items[Items.CONTAINER_MEDICINE]._props.Grids[0]._props.cellsH = 10
+					tables.templates.items[Items.CONTAINER_MEDICINE]._props.Grids[0]._props.cellsV = 10
 
-					tables.templates.items["5c093db286f7740a1b2617e3"]._props.Grids[0]._props.cellsH = 10 // Mr. Holodilnick thermal bag 8x8
-					tables.templates.items["5c093db286f7740a1b2617e3"]._props.Grids[0]._props.cellsV = 10
+					tables.templates.items[Items.CONTAINER_HOLODILNICK]._props.Grids[0]._props.cellsH = 10
+					tables.templates.items[Items.CONTAINER_HOLODILNICK]._props.Grids[0]._props.cellsV = 10
 
-					tables.templates.items["5c127c4486f7745625356c13"]._props.Grids[0]._props.cellsH = 10 // Magazine case 7x7
-					tables.templates.items["5c127c4486f7745625356c13"]._props.Grids[0]._props.cellsV = 7
+					tables.templates.items[Items.CONTAINER_MAGAZINES]._props.Grids[0]._props.cellsH = 10
+					tables.templates.items[Items.CONTAINER_MAGAZINES]._props.Grids[0]._props.cellsV = 7
 
-					tables.templates.items["59fb042886f7746c5005a7b2"]._props.Grids[0]._props.cellsH = 10 // Item case 8x8
-					tables.templates.items["59fb042886f7746c5005a7b2"]._props.Grids[0]._props.cellsV = 10
+					tables.templates.items[Items.CONTAINER_ITEMS]._props.Grids[0]._props.cellsH = 10
+					tables.templates.items[Items.CONTAINER_ITEMS]._props.Grids[0]._props.cellsV = 10
 
-					tables.templates.items["59fb023c86f7746d0d4b423c"]._props.Grids[0]._props.cellsH = 6 // Weapon case 5x10
-					tables.templates.items["59fb023c86f7746d0d4b423c"]._props.Grids[0]._props.cellsV = 10
+					tables.templates.items[Items.CONTAINER_WEAPONS]._props.Grids[0]._props.cellsH = 6
+					tables.templates.items[Items.CONTAINER_WEAPONS]._props.Grids[0]._props.cellsV = 10
 				} catch (error) {
 					logger.warning(`\nOtherTweaks.Bigger_Hideout_Containers failed because of another mod. Send bug report. Continue safely.`)
 					log(error)
@@ -939,7 +968,7 @@ class Mod implements IPostDBLoadMod {
 
 			if (config.OtherTweaks.Signal_Pistol_In_Special_Slots.enabled) {
 				try {
-					items["627a4e6b255f7527fb05a0f6"]._props.Slots.forEach((x) => x._props.filters[0].Filter.push("620109578d82e67e7911abf2"))
+					items[Items.POCKETS_SPECIAL]._props.Slots.forEach((x) => x._props.filters[0].Filter.push(Items.SIGNALPISTOL_SP81))
 				} catch (error) {
 					logger.warning(`OtherTweaks.Signal_Pistol_In_Special_Slots failed bacause of the other mod. Send bug report. Continue safely.`)
 					log(error)
@@ -977,7 +1006,7 @@ class Mod implements IPostDBLoadMod {
 							try {
 								// Safety level 2
 								filtered = item._props?.Grids[0]?._props?.filters[0]?.ExcludedFilter
-								if (filtered.includes("5aafbcd986f7745e590fff23")) {
+								if (filtered.includes(Items.CONTAINER_MEDICINE)) {
 									// log(getItemName(item._id))
 									item._props.Grids[0]._props.filters[0].ExcludedFilter = []
 								}
@@ -995,8 +1024,8 @@ class Mod implements IPostDBLoadMod {
 			if (config.OtherTweaks.Keytool_Buff.enabled) {
 				// Other opinionated tweaks:
 				// keytool buff to make it 5x5
-				tables.templates.items["59fafd4b86f7745ca07e1232"]._props.Grids[0]._props.cellsH = 5
-				tables.templates.items["59fafd4b86f7745ca07e1232"]._props.Grids[0]._props.cellsV = 5
+				tables.templates.items[Items.CONTAINER_KEY_TOOL]._props.Grids[0]._props.cellsH = 5
+				tables.templates.items[Items.CONTAINER_KEY_TOOL]._props.Grids[0]._props.cellsV = 5
 			}
 
 			if (config.OtherTweaks.SICC_Case_Buff.enabled) {
@@ -1005,12 +1034,12 @@ class Mod implements IPostDBLoadMod {
 				try {
 					const mergeFilters = [
 						...new Set([
-							...tables.templates.items["590c60fc86f77412b13fddcf"]._props.Grids[0]._props.filters[0].Filter, // Docs
-							...tables.templates.items["5d235bb686f77443f4331278"]._props.Grids[0]._props.filters[0].Filter, // SICC
-							"59fafd4b86f7745ca07e1232", // keytool
+							...tables.templates.items[Items.CONTAINER_DOCS]._props.Grids[0]._props.filters[0].Filter,
+							...tables.templates.items[Items.CONTAINER_SICC]._props.Grids[0]._props.filters[0].Filter,
+							Items.CONTAINER_KEY_TOOL,
 						]),
 					]
-					tables.templates.items["5d235bb686f77443f4331278"]._props.Grids[0]._props.filters[0].Filter = mergeFilters
+					tables.templates.items[Items.CONTAINER_SICC]._props.Grids[0]._props.filters[0].Filter = mergeFilters
 				} catch (error) {
 					logger.warning(
 						`\nOtherTweaks.SICC_Case_Buff failed bacause of the other mod removed default item filter property (like Valens AIO or SVM). Now SICC case allows all items. Send bug report. Continue safely.`
@@ -1021,7 +1050,8 @@ class Mod implements IPostDBLoadMod {
 			if (config.OtherTweaks.Reshala_Always_Has_GoldenTT.enabled) {
 				// Reshala always has his Golden TT
 				tables.bots.types.bossbully.chances.equipment.Holster = 100
-				tables.bots.types.bossbully.inventory.equipment.Holster = { "5b3b713c5acfc4330140bd8d": 1 }
+				tables.bots.types.bossbully.inventory.equipment.Holster = {};
+				tables.bots.types.bossbully.inventory.equipment.Holster[Items.PISTOL_TT_GOLD] = 1;
 			}
 		}
 
@@ -1034,10 +1064,10 @@ class Mod implements IPostDBLoadMod {
 				therapist.base.insurance.min_return_hour = 2
 				therapist.base.insurance.max_return_hour = 2
 				therapist.base.insurance.max_storage_time = 720
-				insuranceConfig.insuranceMultiplier["54cb50c76803fa8b248b4571"] = 0.1
-				insuranceConfig.insuranceMultiplier["54cb57776803fa99248b456e"] = 0.2
-				insuranceConfig.returnChancePercent["54cb50c76803fa8b248b4571"] = 50
-				insuranceConfig.returnChancePercent["54cb57776803fa99248b456e"] = 80
+				insuranceConfig.insuranceMultiplier[Traders.PRAPOR] = 0.1
+				insuranceConfig.insuranceMultiplier[Traders.THERAPIST] = 0.2
+				insuranceConfig.returnChancePercent[Traders.PRAPOR] = 50
+				insuranceConfig.returnChancePercent[Traders.THERAPIST] = 80
 			} catch (error) {
 				logger.warning(`\nInsuranceChanges failed because of another mod. Send bug report. Continue safely.`)
 				log(error)
@@ -1088,12 +1118,12 @@ class Mod implements IPostDBLoadMod {
 				try {
 					if (config.EconomyOptions.Price_Rebalance.enabled) {
 						// Hardcode fix for important or unbalanced items. Too low prices can't convert to barters.
-						prices["5aa2b923e5b5b000137b7589"] *= 5 // Round frame sunglasses
-						prices["5656eb674bdc2d35148b457c"] *= 5 // 40mm VOG-25 grenade
-						prices["59e770b986f7742cbd762754"] *= 2 // Anti-fragmentation glasses
-						prices["5f5e45cc5021ce62144be7aa"] *= 2 // LolKek 3F Transfer tourist backpack
-						prices["5751487e245977207e26a315"] = 1500 // Emelya
-						prices["57347d3d245977448f7b7f61"] = 2000 // Croutons
+						prices[Items.VISORS_RGLASSES] *= 5 // Round frame sunglasses
+						prices[Items.AMMO_40MMRU_VOG25] *= 5 // 40mm VOG-25 grenade
+						prices[Items.VISORS_AFGLASS] *= 2 // Anti-fragmentation glasses
+						prices[Items.BACKPACK_LK_3F] *= 2 // LolKek 3F Transfer tourist backpack
+						prices[Items.FOOD_EMELYA] = 1500 // Emelya
+						prices[Items.FOOD_CROUTONS] = 2000 // Croutons
 					}
 				} catch (error) {
 					logger.warning(`\nEconomyOptions.Price_Rebalance failed because of another mod. Send bug report. Continue safely.`)
@@ -1199,7 +1229,7 @@ class Mod implements IPostDBLoadMod {
 
 						BSGblacklist.filter((x) => {
 							// dirty hack to block BSG blacklisted items (dogtags, bitcoins, ornaments and others) from barters, since you can't buy them on flea anyway, so it should not matter.
-							if (x == "59faff1d86f7746c51718c9c" && config.EconomyOptions.Barter_Economy.Unban_Bitcoins_For_Barters.enabled == true) {
+							if (x == Items.BARTER_02BTC && config.EconomyOptions.Barter_Economy.Unban_Bitcoins_For_Barters.enabled == true) {
 								// do nothing
 							} else if (!fleaBarterRequestBlacklist.includes(items[x]._parent)) {
 								// Only mod items in categories ALLOWED on flea request list
@@ -1286,19 +1316,19 @@ class Mod implements IPostDBLoadMod {
 			if (config.TraderChanges.Alternative_Categories.enabled) {
 				try {
 					therapist.base.items_buy.category = [
-						"543be5664bdc2dd4348b4569", // Meds
-						"543be6674bdc2df1348b4569", // Food and drink
-						"567849dd4bdc2d150f8b456e", // Map
-						"543be5e94bdc2df1348b4568", // Key
-						// "5448eb774bdc2d0a728b4567", // Barter item
-						"5795f317245977243854e041", // Common container
+						BaseClasses.MEDS,
+						BaseClasses.FOOD_DRINK,
+						BaseClasses.MAP,
+						BaseClasses.KEY,
+						// BaseClasses.BARTER_ITEM,
+						BaseClasses.SIMPLE_CONTAINER,
 						// new:
-						"57864c8c245977548867e7f1", // Medical supplies
-						"57864c322459775490116fbf", // HouseholdGoods
+						BaseClasses.MEDICAL_SUPPLIES,
+						BaseClasses.HOUSEHOLD_GOODS,
 					]
 
-					ragman.base.items_buy.category.push("57864a3d24597754843f8721") // Ragman buys Jewelry and Valuables
-					skier.base.items_buy.category.push("5448ecbe4bdc2d60728b4568") // Skier buys info items
+					ragman.base.items_buy.category.push(BaseClasses.JEWELRY) // Ragman buys Jewelry and Valuables
+					skier.base.items_buy.category.push(BaseClasses.INFO) // Skier buys info items
 				} catch (error) {
 					logger.warning(`\nTraderChanges.AlternativeCategories failed because of another mod. Send bug report. Continue safely.`)
 					log(error)
@@ -1312,22 +1342,24 @@ class Mod implements IPostDBLoadMod {
 					skier.base.balance_eur = 700000
 					skier.base.loyaltyLevels.forEach((x) => (x.minSalesSum = Math.round(x.minSalesSum / euroPrice)))
 
+					const euroBarterId = skier.assort.items.find((x) => x._tpl == Money.EUROS)._id;
+
 					for (const barter in skier.assort.barter_scheme) {
-						if (skier.assort.barter_scheme[barter][0][0]._tpl == "5449016a4bdc2d6f028b456f" && barter != "63d385b6b3eba6c95d0eee0c") {
+						if (barter != euroBarterId && skier.assort.barter_scheme[barter][0][0]._tpl == Money.ROUBLES) {
 							skier.assort.barter_scheme[barter][0][0].count = roundWithPrecision(skier.assort.barter_scheme[barter][0][0].count / euroPrice, 2)
-							skier.assort.barter_scheme[barter][0][0]._tpl = "569668774bdc2da2298b4568"
+							skier.assort.barter_scheme[barter][0][0]._tpl = Money.EUROS
 						}
 					}
 
 					for (const i in tables.templates.quests) {
 						const quest = tables.templates.quests[i]
-						if (quest.traderId == "58330581ace78e27b8b10cee") {
+						if (quest.traderId == Traders.SKIER) {
 							for (const rewards of quest.rewards.Success) {
 								if (rewards.items) {
 									for (const item of rewards.items) {
-										if (item._tpl == "5449016a4bdc2d6f028b456f") {
-											rewards.value = Math.round(rewards.value / euroPrice)
-											item._tpl = "569668774bdc2da2298b4568"
+										if (item._tpl == Money.ROUBLES) {
+											rewards.value = Math.round(+rewards.value / euroPrice)
+											item._tpl = Money.EUROS
 											item.upd.StackObjectsCount = Math.round(item.upd.StackObjectsCount / euroPrice)
 										}
 									}
@@ -1343,21 +1375,44 @@ class Mod implements IPostDBLoadMod {
 
 			if (config.TraderChanges.Reasonably_Priced_Cases.enabled == true) {
 				try {
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0352"][0].forEach((x) => (x.count = 5)) // THICC case (LEDX)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f036e"][0].forEach((x) => (x.count = 10)) // THICC case (Moonshine)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0334"][0].forEach((x) => (x.count = 7256)) // Item case (Euro)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f034a"][0].forEach((x) => (x.count = 8)) // Item case (OScope)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0380"][0].forEach((x) => (x.count = 20)) // Item case (Dogtags)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0382"][0].forEach((x) => (x.count = 15)) // Lucky Scav Junk box (Dogtags)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0350"][0].forEach((x) => (x.count = 961138)) // Lucky Scav Junk box (Rubles)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f033c"][0].forEach((x) => (x.count = 290610)) // Medcase (Rubles)
-					therapist.assort.barter_scheme["63d385d7b3eba6c95d0f0384"][0].forEach((x) => (x.count /= 10)) // LEDX (Dogtags) // Really BSG? 160 kills for a non-FIR item? REALLY?!
-					peacekeeper.assort.barter_scheme["63d385cab3eba6c95d0eff5f"][0].forEach((x) => (x.count = x.count / 5 + 1)) // THICC case (SMT+Bluefolder)
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_THICC_ITEM_CASE, Items.BARTER_LEDX)
+						?.forEach((x) => (x.count = 5));
 
-					skier.assort.barter_scheme["63d385b7b3eba6c95d0eef5c"][0].forEach((x) => (x.count = 4)) // Weapon case (Moonshine)
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_THICC_ITEM_CASE, Items.DRINK_MOONSHINE)
+						?.forEach((x) => (x.count = 10))
 
-					mechanic.assort.barter_scheme["63d385bfb3eba6c95d0ef4d1"][0].forEach((x) => (x.count = 5)) // Weapon case (Bitcoins)
-					mechanic.assort.barter_scheme["63d385c0b3eba6c95d0ef5d8"][0].forEach((x) => (x.count = 10)) // THICC Weapon case (Bitcoins)
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_ITEMS, Money.EUROS)
+						?.forEach((x) => (x.count = 7256))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_ITEMS, Items.BARTER_OSCOPE)
+						?.forEach((x) => (x.count = 8))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_ITEMS, Items.BARTER_USEC)
+						?.forEach((x) => (x.count = 20))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_JUNK, Items.BARTER_USEC)
+						?.forEach((x) => (x.count = 15))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_JUNK, Money.ROUBLES)
+						?.forEach((x) => (x.count = 961138))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_MEDICINE, Money.ROUBLES)
+						?.forEach((x) => (x.count = 290610))
+
+					getBarterSchemeByItemAndCurrency(therapist, Items.BARTER_LEDX, Items.BARTER_USEC)
+						?.forEach((x) => (x.count /= 10)) // Really BSG? 160 kills for a non-FIR item? REALLY?!
+
+					getBarterSchemeByItemAndCurrency(peacekeeper, Items.CONTAINER_THICC_ITEM_CASE, Items.INFO_BLUE_FOLDERS)
+						?.forEach((x) => (x.count = x.count / 5 + 1))
+					
+					getBarterSchemeByItemAndCurrency(skier, Items.CONTAINER_WEAPONS, Items.DRINK_MOONSHINE)
+						?.forEach((x) => (x.count = 4))
+
+					getBarterSchemeByItemAndCurrency(mechanic, Items.CONTAINER_WEAPONS, Items.BARTER_02BTC)
+						?.forEach((x) => (x.count = 5))
+
+					getBarterSchemeByItemAndCurrency(mechanic, Items.CONTAINER_THICC_WEAPON_CASE, Items.BARTER_02BTC)
+						?.forEach((x) => (x.count = 10))
 				} catch (error) {
 					logger.warning(`\nTraderChanges.Reasonably_Priced_Cases failed because of another mod. Send bug report. Continue safely.`)
 					log(error)
@@ -1373,13 +1428,13 @@ class Mod implements IPostDBLoadMod {
 					fenceBlacklist.push(
 						...BSGblacklist,
 						...fleaBarterRequestBlacklist,
-						"5448f39d4bdc2d0a728b4568",
-						"5448f3ac4bdc2dce718b4569",
-						"5448f3a14bdc2d27728b4569"
+						BaseClasses.MEDKIT,
+						BaseClasses.MEDICAL,
+						BaseClasses.DRUGS
 					)
 
 					// Instead, allow him to sell stims!
-					fenceBlacklist = fenceBlacklist.filter((x) => x != "5448f3a64bdc2d60728b456a")
+					fenceBlacklist = fenceBlacklist.filter((x) => x != BaseClasses.STIMULATOR)
 
 					// Fence sells only items that are not in the flea blacklist
 					traderConfig.fence.assortSize = config.TraderChanges.Pacifist_Fence.Number_Of_Fence_Offers
@@ -1404,364 +1459,370 @@ class Mod implements IPostDBLoadMod {
 				// Lavatory:
 				// ------
 				// Toilet paper production nerf lol. Who would have thought this craft would be OP, huh?
-				getCraft("5c13cef886f774072e618e82").count = 1
+				getCraft(Items.BARTER_TP).count = 1
 
 				// 2x Clin production buff
-				getCraft("59e358a886f7741776641ac3").count = 2
+				getCraft(Items.BARTER_CLIN).count = 2
 
 				// 2x Paracord production buff
-				getCraft("5c12688486f77426843c7d32").count = 2
+				getCraft(Items.BARTER_PARACORD).count = 2
 
-				// Corrugated hose buff // 59e35cbb86f7741778269d83
-				getCraft("59e35cbb86f7741778269d83").requirements.forEach((x) => {
+				// Corrugated hose buff
+				getCraft(Items.BARTER_HOSE).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
-				getCraft("59e35cbb86f7741778269d83").count = 1
+				getCraft(Items.BARTER_HOSE).count = 1
 
 				// Water filter < 2 airfilter craft buff
-				getCraft("5d1b385e86f774252167b98a").requirements.find((x) => x.templateId == "590c595c86f7747884343ad7").count = 2
+				getCraft(Items.BARTER_WFILTER).requirements.find((x) => x.templateId == Items.BARTER_FILTER).count = 2
 
 				// MPPV buff (KEKTAPE duct tape 2 -> 1)
-				getCraft("5df8a42886f77412640e2e75").requirements.find((x) => x.templateId == "5e2af29386f7746d4159f077").count = 1
+				getCraft(Items.VEST_MPPV).requirements.find((x) => x.templateId == Items.BARTER_KEK).count = 1
 
 				// ------
 				// Nutrition unit:
 				// ------
 
 				// EWR buff
-				getCraft("60098b1705871270cd5352a1").count = 3
+				getCraft(Items.DRINK_EWR).count = 3
 
 				// coffee buff (2 -> 3)
-				getCraft("5af0484c86f7740f02001f7f").count = 3
+				getCraft(Items.BARTER_MAJAICA).count = 3
 
 				// bottled water buff water (8 -> 16)
-				getCraft("5448fee04bdc2dbc018b4567").count = 16
+				getCraft(Items.DRINK_WATER).count = 16
 
 				// Aquamari buff (3 -> 5)
-				getCraft("5c0fa877d174af02a012e1cf").count = 5
+				getCraft(Items.DRINK_AQUAMARI).count = 5
 
 				// ------
 				// Medstation:
 				// ------
 
 				// Buff MULE
-				getCraft("5ed51652f6c34d2cc26336a1").count = 2
+				getCraft(Items.STIM_MULE).count = 2
 
 				// AFAK buff
-				getCraft("60098ad7c2240c0fe85c570a").requirements.find((x) => x.templateId == "590c678286f77426c9660122").count = 1
-				getCraft("60098ad7c2240c0fe85c570a").requirements.find((x) => x.templateId == "5751a25924597722c463c472").templateId = "5e8488fa988a8701445df1e4"
+				getCraft(Items.MEDKIT_AFAK).requirements.find((x) => x.templateId == Items.MEDKIT_IFAK).count = 1
+				getCraft(Items.MEDKIT_AFAK).requirements.find((x) => x.templateId == Items.MEDICAL_ARMY_BANDAGE).templateId = Items.MEDICAL_CALOKB
 
 				// Portable defibrillator big nerf (Portable Powerbank 1 -> 4). Lore-friendly and still profitable, just not as ridiculous.
-				getCraft("5c052e6986f7746b207bc3c9").requirements.find((x) => x.templateId == "5af0561e86f7745f5f3ad6ac").count = 4
+				getCraft(Items.BARTER_DEFIBRILLATOR).requirements.find((x) => x.templateId == Items.BARTER_POWERBANK).count = 4
 
 				// LEDX buff (Huge buff, 1 of each component only). Now it is actually only sometimes bother to craft it.
-				getCraft("5c0530ee86f774697952d952").requirements.forEach((x) => {
+				getCraft(Items.BARTER_LEDX).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
 
 				// CMS nerf (Medical tools 1 -> 2)
-				getCraft("5d02778e86f774203e7dedbe").requirements.find((x) => x.templateId == "619cc01e0a7c3a1a2731940c").count = 2
+				getCraft(Items.MEDICAL_CMS).requirements.find((x) => x.templateId == Items.BARTER_MEDTOOLS).count = 2
 
 				// GRIzZLY nerf (1 -> 2)
-				getCraft("590c657e86f77412b013051d").count = 1
+				getCraft(Items.MEDKIT_GRIZZLY).count = 1
 
 				// SJ6 buff (2 -> 3)
-				getCraft("5c0e531d86f7747fa23f4d42").count = 3
+				getCraft(Items.STIM_SJ6).count = 3
 
 				// ------
 				// Intel Center:
 				// ------
 
 				// Topographic survey maps buff (1 -> 2)
-				getCraft("62a0a124de7ac81993580542").count = 2
+				getCraft(Items.INFO_MAPS).count = 2
 
 				// Military flash drive lore-based change (2 Secure Flash drive -> 1 VPX, and Topographic survey maps 2 -> 1).
 				// Not "profitable", but will change Intel folder craft to compensate, and allow it to be crafted on level 2.
-				getCraft("62a0a16d0b9d3c46de5b6e97").requirements.forEach((x) => {
+				getCraft(Items.INFO_MFD).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
-				getCraft("62a0a16d0b9d3c46de5b6e97").requirements.find((x) => x.type == "Area").requiredLevel = 2
-				getCraft("62a0a16d0b9d3c46de5b6e97").requirements.find((x) => x.templateId == "590c621186f774138d11ea29").templateId = "5c05300686f7746dce784e5d"
+				getCraft(Items.INFO_MFD).requirements.find((x) => x.type == "Area").requiredLevel = 2
+				getCraft(Items.INFO_MFD).requirements.find((x) => x.templateId == Items.INFO_FLASH_DRIVE).templateId = Items.BARTER_VPX
 
 				// Intelligence folder buff (Military flash drive 2 -> 1)
-				getCraft("5c12613b86f7743bbe2c3f76").requirements.find((x) => x.templateId == "62a0a16d0b9d3c46de5b6e97").count = 1
+				getCraft(Items.INFO_INTELLIGENCE).requirements.find((x) => x.templateId == Items.INFO_MFD).count = 1
 
 				// VPX buff (RAM and Broken GPhone smartphone 3 -> 2)
-				getCraft("5c05300686f7746dce784e5d").requirements.forEach((x) => {
+				getCraft(Items.BARTER_VPX).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 2
 					}
 				})
 
 				// Virtex buff (Military circuit board 2 -> 1)
-				getCraft("5c05308086f7746b2101e90b").requirements.find((x) => x.templateId == "5d0376a486f7747d8050965c").count = 1
+				getCraft(Items.BARTER_VIRTEX).requirements.find((x) => x.templateId == Items.BARTER_MCB).count = 1
 
 				// ------
 				// Workbench:
 				// ------
 
 				// Military circuit board buff (1 -> 2)
-				getCraft("5d0376a486f7747d8050965c").count = 2
+				getCraft(Items.BARTER_MCB).count = 2
 
 				// FLIR huge buff (everything is 1, plus change SAS drive (wtf?!) to Armasight Vulcan MG 3.5x Bravo night vision scope)
-				getCraft("5d1b5e94d7ad1a2b865a96b0").requirements.forEach((x) => {
+				getCraft(Items.SPECIALSCOPE_FLIR_RS32).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
-				getCraft("5d1b5e94d7ad1a2b865a96b0").requirements.find((x) => x.templateId == "590c37d286f77443be3d7827").templateId = "5b3b6e495acfc4330140bd88"
+				getCraft(Items.SPECIALSCOPE_FLIR_RS32).requirements.find((x) => x.templateId == Items.INFO_SAS).templateId = Items.SPECIALSCOPE_VULCAN_MG_35X
 
 				// GPU buff (3 VPX -> 1 Virtex, 10 PCB -> 1, 10 CPU -> 1)
-				getCraft("57347ca924597744596b4e71").requirements.find((x) => x.templateId == "5c05300686f7746dce784e5d").count = 1
-				getCraft("57347ca924597744596b4e71").requirements.find((x) => x.templateId == "5c05300686f7746dce784e5d").templateId = "5c05308086f7746b2101e90b"
-				getCraft("57347ca924597744596b4e71").requirements.find((x) => x.templateId == "573477e124597737dd42e191").count = 1
-				getCraft("57347ca924597744596b4e71").requirements.find((x) => x.templateId == "590a3b0486f7743954552bdb").count = 1
+				getCraft(Items.BARTER_GPU).requirements.find((x) => x.templateId == Items.BARTER_VPX).count = 1
+				getCraft(Items.BARTER_GPU).requirements.find((x) => x.templateId == Items.BARTER_VPX).templateId = Items.BARTER_VIRTEX
+				getCraft(Items.BARTER_GPU).requirements.find((x) => x.templateId == Items.BARTER_CPU).count = 1
+				getCraft(Items.BARTER_GPU).requirements.find((x) => x.templateId == Items.BARTER_PCB).count = 1
 
 				// UHF RFID Reader huge buff (only Broken GPhone X smartphone + Signal Jammer)
-				getCraft("5c052fb986f7746b2101e909").requirements = [
+				getCraft(Items.BARTER_RFIDR).requirements = [
 					{
-						areaType: 11,
+						areaType: HideoutAreas.INTEL_CENTER,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5c1265fc86f7743f896a21c2",
+						templateId: Items.BARTER_GPX,
 						count: 1,
 						isFunctional: false,
 						type: "Item",
 					},
 					{
-						templateId: "5ac78a9b86f7741cca0bbd8d",
+						templateId: Items.SPECITEM_JAMMER,
 						count: 1,
 						isFunctional: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d4042a986f7743185265463",
+						templateId: Items.BARTER_LF_SCDR,
 						type: "Tool",
 					},
 					{
-						templateId: "5d63d33b86f7746ea9275524",
+						templateId: Items.BARTER_F_SCDR,
 						type: "Tool",
 					},
 				]
 
 				// Gasan buff
-				getCraft("590a3efd86f77437d351a25b").requirements.forEach((x) => {
+				getCraft(Items.BARTER_GASAN).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
 
 				// Hawk nerf
-				getCraftID("5dd3c9c8449c0c31795b0f0b").requirements.find((x) => x.templateId == "57347b8b24597737dd42e192").templateId = "60391a8b3364dc22b04d0ce5"
-				getCraftID("5dd3c9c8449c0c31795b0f0b").requirements.find((x) => x.type == "Area").requiredLevel = 2
+				const hawkCraft = getCraftByOutputAndInput(Items.BARTER_HAWK, Items.BARTER_MATCHES);
+				if (hawkCraft) {
+					hawkCraft.requirements.find((x) => x.templateId == Items.BARTER_MATCHES).templateId = Items.BARTER_THERMITE
+					hawkCraft.requirements.find((x) => x.type == "Area").requiredLevel = 2
+				}
 
 				// Spark plug buff 1 -> 4
-				getCraft("590a3c0a86f774385a33c450").count = 4
+				getCraft(Items.BARTER_SPLUG).count = 4
 
 				// PCB -> counter instead of gasan, 3 PCB
-				getCraftID("5ffcac4e1285295b7441ee01").count = 3
-				getCraftID("5ffcac4e1285295b7441ee01").requirements.find((x) => x.templateId == "590a3efd86f77437d351a25b").templateId = "5672cb724bdc2dc2088b456b"
+				const pcbCraft = getCraftByOutputAndInput(Items.BARTER_PCB, Items.BARTER_GASAN);
+				if (pcbCraft) {
+					pcbCraft.count = 3
+					pcbCraft.requirements.find((x) => x.templateId == Items.BARTER_GASAN).templateId = Items.BARTER_GMCOUNT
+				}
 
 				// Geiger-Muller counter uses only 1 gasan at lvl1
-				getCraft("5672cb724bdc2dc2088b456b").requirements = [
+				getCraft(Items.BARTER_GMCOUNT).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 1,
 						type: "Area",
 					},
 					{
-						templateId: "590a3efd86f77437d351a25b",
+						templateId: Items.BARTER_GASAN,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c2e1186f77425357b6124",
+						templateId: Items.BARTER_TOOLSET,
 						type: "Tool",
 					},
 				]
 
 				// GreenBat
-				getCraft("5e2aedd986f7746d404f3aa4").count = 2
-				getCraft("5e2aedd986f7746d404f3aa4").requirements = [
+				getCraft(Items.BARTER_GREENBAT).count = 2
+				getCraft(Items.BARTER_GREENBAT).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5af0561e86f7745f5f3ad6ac",
+						templateId: Items.BARTER_POWERBANK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d1b31ce86f7742523398394",
+						templateId: Items.BARTER_RPLIERS,
 						type: "Tool",
 					},
 				]
 
 				// VOG-25 Khattabka improvised hand grenade
-				getCraft("5e340dcdcb6d5863cc5e5efb").requirements.forEach((x) => {
+				getCraft(Items.GRENADE_VOG25).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 2
 					}
 				})
 
 				// 23x75mm "Zvezda" flashbang round
-				getCraft("5e85a9f4add9fe03027d9bf1").count = 20
-				getCraft("5e85a9f4add9fe03027d9bf1").requirements = [
+				getCraft(Items.AMMO_23X75_ZVEZDA).count = 20
+				getCraft(Items.AMMO_23X75_ZVEZDA).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5d6fc78386f77449d825f9dc",
+						templateId: Items.BARTER_EAGLE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5e85a9a6eacf8c039e4e2ac1",
+						templateId: Items.AMMO_23X75_SHRAP10,
 						count: 20,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5a0c27731526d80618476ac4",
+						templateId: Items.GRENADE_ZARYA,
 						count: 2,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c2e1186f77425357b6124",
+						templateId: Items.BARTER_TOOLSET,
 						type: "Tool",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 				]
 
 				// Rechargeable battery buff, Portable Powerbank -> Electric drill
-				getCraft("590a358486f77429692b2790").requirements.find((x) => x.templateId == "5af0561e86f7745f5f3ad6ac").templateId = "59e35de086f7741778269d84"
+				getCraft(Items.BARTER_RBATTERY).requirements.find((x) => x.templateId == Items.BARTER_POWERBANK).templateId = Items.BARTER_DRILL
 
 				//// AMMO ////
 				// 9x19mm AP 6.3
-				getCraft("5c925fa22e221601da359b7b").requirements.find((x) => x.templateId == "5d6fc87386f77449db3db94e").count = 1
-				getCraft("5c925fa22e221601da359b7b").requirements.find((x) => x.templateId == "5d6fc87386f77449db3db94e").templateId = "5d6fc78386f77449d825f9dc"
+				getCraft(Items.AMMO_9X19_AP_63).requirements.find((x) => x.templateId == Items.BARTER_HAWK).count = 1
+				getCraft(Items.AMMO_9X19_AP_63).requirements.find((x) => x.templateId == Items.BARTER_HAWK).templateId = Items.BARTER_EAGLE
 
-				// "5efb0da7a29a85116f6ea05f", // 9x19mm PBP gzh
-				getCraft("5efb0da7a29a85116f6ea05f").requirements = [
+				// 9x19mm PBP gzh
+				getCraft(Items.AMMO_9X19_PBP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "5c925fa22e221601da359b7b",
+						templateId: Items.AMMO_9X19_AP_63,
 						count: 200,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c2e1186f77425357b6124",
+						templateId: Items.BARTER_TOOLSET,
 						type: "Tool",
 					},
 				]
 
 				// .45 ACP AP buff
-				getCraft("5efb0cabfb3e451d70735af5").count = 120
-				getCraft("5efb0cabfb3e451d70735af5").requirements = [
+				getCraft(Items.AMMO_45ACP_AP).count = 120
+				getCraft(Items.AMMO_45ACP_AP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5efb0d4f4bc50b58e81710f3",
+						templateId: Items.AMMO_45ACP_LASERMATCH,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 					{
-						templateId: "5d6fc78386f77449d825f9dc",
+						templateId: Items.BARTER_EAGLE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c31c586f774245e3141b2",
+						templateId: Items.BARTER_NAILS,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "62a0a0bb621468534a797ad5",
+						templateId: Items.BARTER_MASTER,
 						type: "Tool",
 					},
 				]
 
 				// 5.7x28mm SS190 buff
-				getCraft("5cc80f38e4a949001152b560").requirements = [
+				getCraft(Items.AMMO_57X28_SS190).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5d1b317c86f7742523398392",
+						templateId: Items.BARTER_HAND_DRILL,
 						type: "Tool",
 					},
 					{
-						templateId: "5af04b6486f774195a3ebb49",
+						templateId: Items.BARTER_ELITE,
 						type: "Tool",
 					},
 					{
-						templateId: "5cc80f8fe4a949033b0224a2",
+						templateId: Items.AMMO_57X28_SS197SR,
 						count: 180,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c31c586f774245e3141b2",
+						templateId: Items.BARTER_NAILS,
 						count: 2,
 						isFunctional: false,
 						isEncoded: false,
@@ -1770,29 +1831,29 @@ class Mod implements IPostDBLoadMod {
 				]
 
 				// 7.62x51mm M80 buff
-				getCraft("58dd3ad986f77403051cba8f").requirements = [
+				getCraft(Items.AMMO_762X51_M80).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 					{
-						templateId: "5d1b31ce86f7742523398394",
+						templateId: Items.BARTER_RPLIERS,
 						type: "Tool",
 					},
 					{
-						templateId: "5e023e53d4353e3302577c4c",
+						templateId: Items.AMMO_762X51_BCP_FMJ,
 						count: 80,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc78386f77449d825f9dc",
+						templateId: Items.BARTER_EAGLE,
 						count: 2,
 						isFunctional: false,
 						isEncoded: false,
@@ -1801,421 +1862,421 @@ class Mod implements IPostDBLoadMod {
 				]
 
 				// 5.56x45mm MK 318 Mod 0 (SOST)
-				getCraft("60194943740c5d77f6705eea").requirements = [
+				getCraft(Items.AMMO_556X45_SOST).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "59e6927d86f77411da468256",
+						templateId: Items.AMMO_556X45_HP,
 						count: 150,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc78386f77449d825f9dc",
+						templateId: Items.BARTER_EAGLE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5af04b6486f774195a3ebb49",
+						templateId: Items.BARTER_ELITE,
 						type: "Tool",
 					},
 				]
 
-				// "59e0d99486f7744a32234762", // 7.62x39mm BP gzh
-				getCraft("59e0d99486f7744a32234762").requirements = [
+				// 7.62x39mm BP gzh
+				getCraft(Items.AMMO_762X39_BP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "5656d7c34bdc2d9d198b4587",
+						templateId: Items.AMMO_762X39_PS,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "59e4d24686f7741776641ac7",
+						templateId: Items.AMMO_762X39_US,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 				]
 
-				// "5c0d56a986f774449d5de529", // 9x19mm RIP
-				getCraft("5c0d56a986f774449d5de529").requirements = [
+				// 9x19mm RIP
+				getCraft(Items.AMMO_9X19_RIP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "56d59d3ad2720bdb418b4577",
+						templateId: Items.AMMO_9X19_PST,
 						count: 180,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "57e26fc7245977162a14b800",
+						templateId: Items.KNIFE_A2607,
 						count: 2,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5af04b6486f774195a3ebb49",
+						templateId: Items.BARTER_ELITE,
 						type: "Tool",
 					},
 					{
-						templateId: "63a0b208f444d32d6f03ea1e",
+						templateId: Items.BARTER_SLEDGEHAMMER,
 						type: "Tool",
 					},
 				]
 
-				// "5c0d5e4486f77478390952fe", // 5.45x39mm PPBS gs "Igolnik"
-				getCraft("5c0d5e4486f77478390952fe").count = 120
-				getCraft("5c0d5e4486f77478390952fe").requirements = [
+				// 5.45x39mm PPBS gs "Igolnik"
+				getCraft(Items.AMMO_545X39_PPBS).count = 120
+				getCraft(Items.AMMO_545X39_PPBS).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "590c5a7286f7747884343aea",
+						templateId: Items.BARTER_KITE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc78386f77449d825f9dc",
+						templateId: Items.BARTER_EAGLE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "56dff2ced2720bb4668b4567",
+						templateId: Items.AMMO_545X39_PP,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "56dfef82d2720bbd668b4567",
+						templateId: Items.AMMO_545X39_BP,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d40425986f7743185265461",
+						templateId: Items.BARTER_NIPPERS,
 						type: "Tool",
 					},
 					{
-						templateId: "590c2b4386f77425357b6123",
+						templateId: Items.BARTER_PLIERS,
 						type: "Tool",
 					},
 				]
 
-				// "5cadf6eeae921500134b2799", // 12.7x55mm PS12B
-				getCraft("5cadf6eeae921500134b2799").count = 120
+				// 12.7x55mm PS12B
+				getCraft(Items.AMMO_127X55_PS12B).count = 120
 
-				// "59e690b686f7746c9f75e848", // 5.56x45mm M995
-				getCraft("59e690b686f7746c9f75e848").count = 180
-				getCraft("59e690b686f7746c9f75e848").requirements = [
+				// 5.56x45mm M995
+				getCraft(Items.AMMO_556X45_M995).count = 180
+				getCraft(Items.AMMO_556X45_M995).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "54527ac44bdc2d36668b4567",
+						templateId: Items.AMMO_556X45_M855A1,
 						count: 180,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c2e1186f77425357b6124",
+						templateId: Items.BARTER_TOOLSET,
 						type: "Tool",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 				]
 
 				// 9x39mm SP-6 gs
-				getCraft("57a0e5022459774d1673f889").requirements = [
+				getCraft(Items.AMMO_9X39_SP6).requirements = [
 					{
-						templateId: "59e4d24686f7741776641ac7",
+						templateId: Items.AMMO_762X39_US,
 						count: 300,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "56d59d3ad2720bdb418b4577",
+						templateId: Items.AMMO_9X19_PST,
 						count: 300,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 3,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "590c2e1186f77425357b6124",
+						templateId: Items.BARTER_TOOLSET,
 						type: "Tool",
 					},
 				]
 
-				// "5c0d688c86f77413ae3407b2", // 9x39mm BP gs
-				//				getCraft("5c0d688c86f77413ae3407b2").requirements = [
+				// 9x39mm BP gs
+				//				getCraft(Items.AMMO_9X39_BP).requirements = [
 				//					{
-				//						templateId: "57a0e5022459774d1673f889",
+				//						templateId: Items.AMMO_9X39_SP6,
 				//						count: 160,
 				//						isFunctional: false,
 				//						isEncoded: false,
 				//						type: "Item",
 				//					},
 				//					{
-				//						templateId: "5d6fc87386f77449db3db94e",
+				//						templateId: Items.BARTER_HAWK,
 				//						count: 1,
 				//						isFunctional: false,
 				//						isEncoded: false,
 				//						type: "Item",
 				//					},
 				//					{
-				//						areaType: 10,
+				//						areaType: HideoutAreas.WORKBENCH,
 				//						requiredLevel: 3,
 				//						type: "Area",
 				//					},
 				//				]
 
-				// "5c0d668f86f7747ccb7f13b2", // 9x39mm SPP gs
-				getCraft("5c0d668f86f7747ccb7f13b2").requirements = [
+				// 9x39mm SPP gs
+				getCraft(Items.AMMO_9X39_SPP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "57a0dfb82459774d3078b56c",
+						templateId: Items.AMMO_9X39_SP5,
 						count: 200,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5efb0da7a29a85116f6ea05f",
+						templateId: Items.AMMO_9X19_PBP,
 						count: 200,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d40425986f7743185265461",
+						templateId: Items.BARTER_NIPPERS,
 						type: "Tool",
 					},
 				]
 
 				// 7.62x54mm R SNB gzh nerf lol
-				getCraft("560d61e84bdc2da74d8b4571").requirements.find((x) => x.templateId == "5887431f2459777e1612938f").templateId = "5e023d34e8a400319a28ed44"
-				getCraft("560d61e84bdc2da74d8b4571").requirements.find((x) => x.type == "Area").requiredLevel = 3
+				getCraft(Items.AMMO_762X54R_SNB).requirements.find((x) => x.templateId == Items.AMMO_762X54R_LPS).templateId = Items.AMMO_762X54R_BT
+				getCraft(Items.AMMO_762X54R_SNB).requirements.find((x) => x.type == "Area").requiredLevel = 3
 
 				// 9x21mm BT gzh buff
-				getCraft("5a26ac0ec4a28200741e1e18")
-					.requirements.filter((x) => x.templateId != "5a269f97c4a282000b151807" && x.areaType == undefined)
+				getCraft(Items.AMMO_9X21_BT)
+					.requirements.filter((x) => x.templateId != Items.AMMO_9X21_PS && x.areaType == undefined)
 					.forEach((x) => (x.count = 1))
 
-				// "57371aab2459775a77142f22", // 9x18mm PMM PstM gzh
-				getCraft("57371aab2459775a77142f22").requirements.push({
-					templateId: "5737201124597760fc4431f1",
+				// 9x18mm PMM PstM gzh
+				getCraft(Items.AMMO_9X18PM_PSTM).requirements.push({
+					templateId: Items.AMMO_9X18PM_PST,
 					count: 140,
 					isFunctional: false,
 					isEncoded: false,
 					type: "Item",
 				})
 
-				// "5d6e6806a4b936088465b17e", // 12/70 8.5mm Magnum buckshot
-				getCraft("5d6e6806a4b936088465b17e").requirements = [
+				// 12/70 8.5mm Magnum buckshot
+				getCraft(Items.AMMO_12G_MAGNUM).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 1,
 						type: "Area",
 					},
 					{
-						templateId: "560d5e524bdc2d25448b4571",
+						templateId: Items.AMMO_12G_7MM,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c5a7286f7747884343aea",
+						templateId: Items.BARTER_KITE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 				]
-				// "5d6e6911a4b9361bd5780d52", // 12/70 flechette
-				getCraft("5d6e6911a4b9361bd5780d52").requirements = [
+				// 12/70 flechette
+				getCraft(Items.AMMO_12G_FLECHETTE).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 1,
 						type: "Area",
 					},
 					{
-						templateId: "5d1b36a186f7742523398433",
+						templateId: Items.BARTER_METAL_TANK,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c5a7286f7747884343aea",
+						templateId: Items.BARTER_KITE,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d6e6869a4b9361c140bcfde",
+						templateId: Items.AMMO_12G_GRIZZLY_40,
 						count: 60,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d40419286f774318526545f",
+						templateId: Items.BARTER_MSCISSORS,
 						type: "Tool",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 				]
 
-				//"5c0d591486f7744c505b416f", // 12/70 RIP
-				getCraft("5c0d591486f7744c505b416f").requirements.push({
-					templateId: "5d6e68dea4b9361bcc29e659",
+				// 12/70 RIP
+				getCraft(Items.AMMO_12G_RIP).requirements.push({
+					templateId: Items.AMMO_12G_DUALSABOT,
 					count: 60,
 					isFunctional: false,
 					isEncoded: false,
 					type: "Item",
 				})
 
-				// "5d6e68a8a4b9360b6c0d54e2", // 12/70 AP-20 armor-piercing slug
-				getCraft("5d6e68a8a4b9360b6c0d54e2").requirements = [
+				// 12/70 AP-20 armor-piercing slug
+				getCraft(Items.AMMO_12G_AP20).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "5d6e6806a4b936088465b17e",
+						templateId: Items.AMMO_12G_MAGNUM,
 						count: 80,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5c925fa22e221601da359b7b",
+						templateId: Items.AMMO_9X19_AP_63,
 						count: 80,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d40425986f7743185265461",
+						templateId: Items.BARTER_NIPPERS,
 						type: "Tool",
 					},
 					{
-						templateId: "5d4042a986f7743185265463",
+						templateId: Items.BARTER_LF_SCDR,
 						type: "Tool",
 					},
 				]
 
 				// 5.56x45mm M856A1 buff
-				getCraft("59e6906286f7746c9f75e847").requirements.find((x) => x.templateId == "5d6fc87386f77449db3db94e").count = 1
+				getCraft(Items.AMMO_556X45_M856A1).requirements.find((x) => x.templateId == Items.BARTER_HAWK).count = 1
 
-				// "5ba26835d4351e0035628ff5", // 4.6x30mm AP SX
-				getCraft("5ba26835d4351e0035628ff5").requirements.forEach((x) => {
+				// 4.6x30mm AP SX
+				getCraft(Items.AMMO_46X30_AP_SX).requirements.forEach((x) => {
 					if (x.count && x.count < 10) {
 						x.count = 1
 					}
 				})
 
-				// "5fd20ff893a8961fc660a954", // .300 Blackout AP
-				getCraft("5fd20ff893a8961fc660a954").requirements = [
+				// .300 Blackout AP
+				getCraft(Items.AMMO_762X35_AP).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "62a0a0bb621468534a797ad5",
+						templateId: Items.BARTER_MASTER,
 						type: "Tool",
 					},
 					{
-						templateId: "5d40425986f7743185265461",
+						templateId: Items.BARTER_NIPPERS,
 						type: "Tool",
 					},
 					{
-						templateId: "6196365d58ef8c428c287da1",
+						templateId: Items.AMMO_762X35_WHISPER,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5a6086ea4f39f99cd479502f",
+						templateId: Items.AMMO_762X51_M61,
 						count: 120,
 						isFunctional: false,
 						isEncoded: false,
@@ -2224,87 +2285,87 @@ class Mod implements IPostDBLoadMod {
 				]
 
 				// .366 TKM AP-M change
-				getCraft("5f0596629e22f464da6bbdd9").requirements = [
+				getCraft(Items.AMMO_366TKM_APM).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 2,
 						type: "Area",
 					},
 					{
-						templateId: "57a0e5022459774d1673f889",
+						templateId: Items.AMMO_9X39_SP6,
 						count: 100,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "59e4d3d286f774176a36250a",
+						templateId: Items.AMMO_762X39_HP,
 						count: 100,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "590c2b4386f77425357b6123",
+						templateId: Items.BARTER_PLIERS,
 						type: "Tool",
 					},
 				]
 				// 7.62x51mm M61 buff
-				getCraft("5a6086ea4f39f99cd479502f").requirements = [
+				getCraft(Items.AMMO_762X51_M61).requirements = [
 					{
-						areaType: 10,
+						areaType: HideoutAreas.WORKBENCH,
 						requiredLevel: 3,
 						type: "Area",
 					},
 					{
-						templateId: "5d6fc87386f77449db3db94e",
+						templateId: Items.BARTER_HAWK,
 						count: 2,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5d1c774f86f7746d6620f8db",
+						templateId: Items.BARTER_HELIX,
 						count: 1,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "5a608bf24f39f98ffc77720e",
+						templateId: Items.AMMO_762X51_M62,
 						count: 80,
 						isFunctional: false,
 						isEncoded: false,
 						type: "Item",
 					},
 					{
-						templateId: "544fb5454bdc2df8738b456a",
+						templateId: Items.SPECITEM_MULTITOOL,
 						type: "Tool",
 					},
 				]
-				getCraft("5a6086ea4f39f99cd479502f").count = 80
+				getCraft(Items.AMMO_762X51_M61).count = 80
 
 				// 5.45x39mm PP gs nerf
-				getCraft("56dff2ced2720bb4668b4567").count = 200
-				getCraft("56dff2ced2720bb4668b4567").requirements.find((x) => x.templateId == "57347c5b245977448d35f6e1").count = 200
-				getCraft("56dff2ced2720bb4668b4567").requirements.find((x) => x.templateId == "57347c5b245977448d35f6e1").templateId = "56dff4ecd2720b5f5a8b4568"
+				getCraft(Items.AMMO_545X39_PP).count = 200
+				getCraft(Items.AMMO_545X39_PP).requirements.find((x) => x.templateId == Items.BARTER_BOLTS).count = 200
+				getCraft(Items.AMMO_545X39_PP).requirements.find((x) => x.templateId == Items.BARTER_BOLTS).templateId = Items.AMMO_545X39_US
 
-				// "5d0379a886f77420407aa271", // OFZ 30x160mm shell
-				getCraft("5d0379a886f77420407aa271").requirements.forEach((x) => {
+				// OFZ 30x160mm shell
+				getCraft(Items.BARTER_OFZ).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
 
-				// "5448be9a4bdc2dfd2f8b456a", // RGD-5 hand grenade
-				getCraft("5448be9a4bdc2dfd2f8b456a").requirements.forEach((x) => {
+				// RGD-5 hand grenade
+				getCraft(Items.GRENADE_RGD5).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
 				})
 
 				// "Zarya" stun grenade buff
-				getCraft("5a0c27731526d80618476ac4").requirements.forEach((x) => {
+				getCraft(Items.GRENADE_ZARYA).requirements.forEach((x) => {
 					if (x.count) {
 						x.count = 1
 					}
@@ -2330,342 +2391,396 @@ class Mod implements IPostDBLoadMod {
 				// 63da4dbee8fa73e225000009
 				// 63da4dbee8fa73e22500000a
 
-				const Ophthalmoscope = {
+				const ophthalmoscope: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000001",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "5e2aedd986f7746d404f3aa4",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.BARTER_GREENBAT,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "619cc01e0a7c3a1a2731940c",
+							templateId: Items.BARTER_MEDTOOLS,
 							count: 2,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "57d17c5e2459775a5c57d17d",
+							templateId: Items.FLASHLIGHT_WF501B,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5b4391a586f7745321235ab2",
+							templateId: Items.SPECITEM_CAMERA,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "57347c1124597737fb1379e3",
+							templateId: Items.BARTER_DUCT_TAPE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 105,
-					boosters: null,
-					endProduct: "5af0534a86f7743b6f354284",
+					endProduct: Items.BARTER_OSCOPE,
 					continuous: false,
 					count: 1,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const Zagustin = {
+				const zagustin: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000002",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "5c0e530286f7747fa1419862",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.STIM_PROPITAL,
 							count: 2,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5e8488fa988a8701445df1e4",
+							templateId: Items.MEDICAL_CALOKB,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5ed515f6915ec335206e4152",
+							templateId: Items.STIM_AHF1M,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 105,
-					boosters: null,
-					endProduct: "5c0e533786f7747fa23f4d47",
+					endProduct: Items.STIM_ZAGUSTIN,
 					continuous: false,
 					count: 3,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const Obdolbos = {
+				const obdolbos: IHideoutProduction = {
 					// Did you always want to run your own meth lab in Tarkov? Now you can.
 					_id: "63da4dbee8fa73e225000003",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "5c0e531286f7747fa54205c2",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.STIM_SJ1,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5b43575a86f77424f443fe62",
+							templateId: Items.BARTER_FCOND,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5e2af00086f7746d3f3c33f7",
+							templateId: Items.BARTER_DCLEANER,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "62a09f32621468534a797acb",
+							templateId: Items.DRINK_PEVKO,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5d40407c86f774318526545a",
+							templateId: Items.DRINK_VODKA,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5d403f9186f7743cac3f229b",
+							templateId: Items.DRINK_WHISKEY,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5d1b376e86f774252519444e",
+							templateId: Items.DRINK_MOONSHINE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5d1b2f3f86f774252167a52c",
+							templateId: Items.BARTER_FP100,
 							type: "Tool",
 						},
 					],
 					productionTime: 564,
-					boosters: null,
-					endProduct: "5ed5166ad380ab312177c100",
+					endProduct: Items.STIM_OBDOLBOS,
 					continuous: false,
 					count: 8,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const CALOK = {
+				const calok: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000004",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 2, type: "Area" },
 						{
-							templateId: "59e35abd86f7741778269d82", // Pack of sodium bicarbonate
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 2,
+							type: "Area"
+						},
+						{
+							templateId: Items.BARTER_SODIUM, // Pack of sodium bicarbonate
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5755383e24597772cb798966", // Vaseline balm
+							templateId: Items.DRUGS_VASELINE, // Vaseline balm
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 48,
-					boosters: null,
-					endProduct: "5e8488fa988a8701445df1e4",
+					endProduct: Items.MEDICAL_CALOKB,
 					continuous: false,
 					count: 2,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 					// Granular nature? Check.
 					// Stops blood with magical properties of pain-relieving Tarkov Vaseline? Check.
 					// Fun and economically balanced recipe that includes underused items? Triple check.
 				}
-				const Adrenaline = {
+				const adrenaline: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000005",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 2, type: "Area" },
 						{
-							templateId: "5751496424597720a27126da",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 2,
+							type: "Area"
+						},
+						{
+							templateId: Items.DRINK_HOT_ROD,
 							count: 3,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5755356824597772cb798962",
+							templateId: Items.MEDKIT_AI2,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 23,
-					boosters: null,
-					endProduct: "5c10c8fd86f7743d7d706df3",
+					endProduct: Items.STIM_ADRENALINE,
 					continuous: false,
 					count: 1,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const ThreebTG = {
+				const threebTG: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000006",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "5c10c8fd86f7743d7d706df3",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.STIM_ADRENALINE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "59e361e886f774176c10a2a5",
+							templateId: Items.BARTER_H2O2,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "57505f6224597709a92585a9",
+							templateId: Items.FOOD_ALYONKA,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 31,
-					boosters: null,
-					endProduct: "5ed515c8d380ab312177c0fa",
+					endProduct: Items.STIM_3BTG,
 					continuous: false,
 					count: 2,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const AHF1 = {
+				const ahf1: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000007",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 2, type: "Area" },
 						{
-							templateId: "590c695186f7741e566b64a2",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 2,
+							type: "Area"
+						},
+						{
+							templateId: Items.DRUGS_AUGMENTIN,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "544fb3f34bdc2d03748b456a",
+							templateId: Items.DRUGS_MORPHINE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 47,
-					boosters: null,
-					endProduct: "5ed515f6915ec335206e4152",
+					endProduct: Items.STIM_AHF1M,
 					continuous: false,
 					count: 1,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const OLOLO = {
+				const ololo: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000008",
 
-					areaType: 8,
+					areaType: HideoutAreas.NUTRITION_UNIT,
 					requirements: [
-						{ areaType: 8, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "57513f9324597720a7128161",
+							areaType: HideoutAreas.NUTRITION_UNIT,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.DRINK_GRAND,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "57513fcc24597720a31c09a6",
+							templateId: Items.DRINK_VITA,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "57513f07245977207e26a311",
+							templateId: Items.DRINK_APPLE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "575062b524597720a31c09a1",
+							templateId: Items.DRINK_ICEGREEN,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "544fb62a4bdc2dfb738b4568",
+							templateId: Items.DRINK_PINEAPPLE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "544fb37f4bdc2dee738b4567",
+							templateId: Items.DRUGS_ANALGIN,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5d1b385e86f774252167b98a",
+							templateId: Items.BARTER_WFILTER,
 							type: "Tool",
 						},
 						{
-							templateId: "590de71386f774347051a052",
+							templateId: Items.BARTER_TEAPOT,
 							type: "Tool",
 						},
 					],
 					productionTime: 71,
-					boosters: null,
-					endProduct: "62a0a043cf4a99369e2624a5",
+					endProduct: Items.BARTER_VITAMINS,
 					continuous: false,
 					count: 3,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
-				const L1 = {
+				const l1: IHideoutProduction = {
 					_id: "63da4dbee8fa73e225000009",
 
-					areaType: 7,
+					areaType: HideoutAreas.MEDSTATION,
 					requirements: [
-						{ areaType: 7, requiredLevel: 3, type: "Area" },
 						{
-							templateId: "5c10c8fd86f7743d7d706df3",
+							areaType: HideoutAreas.MEDSTATION,
+							requiredLevel: 3,
+							type: "Area"
+						},
+						{
+							templateId: Items.STIM_ADRENALINE,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 						{
-							templateId: "5c0e531d86f7747fa23f4d42",
+							templateId: Items.STIM_SJ6,
 							count: 1,
 							isFunctional: false,
 							type: "Item",
 						},
 					],
 					productionTime: 71,
-					boosters: null,
-					endProduct: "5ed515e03a40a50460332579",
+					endProduct: Items.STIM_L1,
 					continuous: false,
 					count: 1,
 					productionLimitCount: 0,
+					isEncoded: false,
+					locked: false,
+					needFuelForAllProductionTime: false
 				}
 
-				tables.hideout.production.push(ThreebTG, Adrenaline, L1, AHF1, CALOK, Ophthalmoscope, Zagustin, Obdolbos, OLOLO)
+				tables.hideout.production.push(threebTG, adrenaline, l1, ahf1, calok, ophthalmoscope, zagustin, obdolbos, ololo)
 			} catch (error) {
 				logger.warning(`\nAdditionalCraftingRecipes failed because of another mod. Send bug report. Continue safely.`)
 				log(error)
@@ -2675,10 +2790,10 @@ class Mod implements IPostDBLoadMod {
 		// if (config.OtherTweaks.CollectorQuestEarlyStart.enabled == true) {
 		// WIP, waiting for SPT to update
 		// 	// Object.values()
-		// 	tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForFinish.push(
-		// 		tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForStart[0]
+		// 	tables.templates.quests[collectorQuest].conditions.AvailableForFinish.push(
+		// 		tables.templates.quests[collectorQuest].conditions.AvailableForStart[0]
 		// 	)
-		// 	tables.templates.quests["5c51aac186f77432ea65c552"].conditions.AvailableForStart = [
+		// 	tables.templates.quests[collectorQuest].conditions.AvailableForStart = [
 		// 		{
 		// 			_parent: "Level",
 		// 			_props: {
@@ -2695,9 +2810,31 @@ class Mod implements IPostDBLoadMod {
 		// 	]
 		// }
 
+		function getBarterSchemeByItemAndCurrency(trader, resultItem, currency)
+		{
+			for (const item of trader.assort.items)
+			{
+				if (item._tpl != resultItem) continue;
+
+				for (const scheme of trader.barder_schemes[item._id][0])
+				{
+					if (scheme._tpl == currency)
+					{
+						return scheme;
+					}
+				}
+			}
+
+			logger.warning(`\ngetBarterSchemeByItemAndCurrency function failed bacause of the other mod. Ignore this error safely and continue. Send bug report.`)
+			log(trader)
+			log(resultItem)
+			log(currency)
+			return null;
+		}
+
 		function getCraft(endProductID) {
 			try {
-				return tables.hideout.production.find((x) => x.endProduct == endProductID && x.areaType != 21)
+				return tables.hideout.production.find((x) => x.endProduct == endProductID && x.areaType != HideoutAreas.CHRISTMAS_TREE)
 			} catch (error) {
 				logger.warning(`\ngetCraft function failed bacause of the other mod. Ignore this error safely and continue. Send bug report.`)
 				log(endProductID)
@@ -2705,14 +2842,25 @@ class Mod implements IPostDBLoadMod {
 			}
 		}
 
-		function getCraftID(craftID) {
-			try {
-				return tables.hideout.production.find((x) => x._id == craftID && x.areaType != 21)
-			} catch (error) {
-				logger.warning(`\ngetCraft function failed bacause of the other mod. Ignore this error safely and continue. Send bug report.`)
-				log(craftID)
-				log(error)
+		function getCraftByOutputAndInput(outputItem, inputItem)
+		{
+			for (const production of tables.hideout.production)
+			{
+				if (production.endProduct != outputItem || production.areaType == HideoutAreas.CHRISTMAS_TREE) continue;
+
+				for (const requirement of production.requirements)
+				{
+					if (requirement.templateId == inputItem)
+					{
+						return production;
+					}
+				}
 			}
+
+			logger.warning(`\ngetCraftByOutputAndInput function failed bacause of the other mod. Ignore this error safely and continue. Send bug report.`)
+			log(outputItem)
+			log(inputItem)
+			return null;
 		}
 
 		function getItemInHandbook(itemID) {
@@ -2738,17 +2886,15 @@ class Mod implements IPostDBLoadMod {
 			const multiplier = Math.pow(10, precision)
 			return Math.round(num * multiplier) / multiplier
 		}
-
-		function sort(a, b) {
-			if (a > b) {
-				return 1
-			}
-			if (a < b) {
-				return -1
-			}
-			return 0
-		}
 	}
+}
+
+function loadConfig(configPath) {
+	const configAbsolutePath = path.join(__dirname, configPath);
+	const configContents = fs.readFileSync(configAbsolutePath, 'utf-8');
+	const config = json5.parse(configContents);
+
+	return config;
 }
 
 const log = (i: any) => {

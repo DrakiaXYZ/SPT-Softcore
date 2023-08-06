@@ -1,4 +1,4 @@
-const fleaBarterRequestWhitelist = [
+[
 	// Used for generating blacklists
 	// base classes = parent IDs for actual items, not nodes
 	// "55818b224bdc2dde698b456f", // Mount
@@ -89,5 +89,3 @@ const fleaBarterRequestWhitelist = [
 	"590c745b86f7743cc433c5f2", // Other
 	"57864bb7245977548b3b66c2", // Tool
 ]
-
-module.exports = fleaBarterRequestWhitelist

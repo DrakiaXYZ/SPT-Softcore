@@ -1,4 +1,4 @@
-const fleaListingsWhitelist = [
+[
 	// Whitelist for disabling global flea offers, used in Pacifist_FleaMarket
 	// Handbook Categories IDs, updated for 3.5.0
 	"5b47574386f77428ca22b2ed", // Energy elements
@@ -87,6 +87,4 @@ const fleaListingsWhitelist = [
 	// "5b619f1a86f77450a702a6f3", // Quest items
 	// "5c518ec986f7743b68682ce2", // Mechanical keys
 	// "5c518ed586f774119a772aee", // Electronic keys
-];
-
-module.exports = fleaListingsWhitelist
+]
