@@ -14,6 +14,7 @@ import { IHideoutConfig } from "@spt-aki/models/spt/config/IHideoutConfig"
 import { IInsuranceConfig } from "@spt-aki/models/spt/config/IInsuranceConfig"
 import { IScavCaseConfig } from "@spt-aki/models/spt/config/IScavCaseConfig"
 import { Traders } from "@spt-aki/models/enums/Traders"
+import { ITrader } from "@spt-aki/models/eft/common/tables/ITrader";
 import { Money } from "@spt-aki/models/enums/Money"
 import { BaseClasses } from "@spt-aki/models/enums/BaseClasses"
 import { HideoutAreas } from "@spt-aki/models/enums/HideoutAreas"
@@ -1190,10 +1191,10 @@ class Mod implements IPostDBLoadMod {
 
 				try {
 					// Sligtly increase flea prices, but with bigger variance, you still get a lot of great trades. Hustle.
-					ragfairConfig.dynamic.price.min *= config.EconomyOptions.Flea_Prices_Increased.multiplier // 0.8 -> 1.04
-					ragfairConfig.dynamic.price.max *= config.EconomyOptions.Flea_Prices_Increased.multiplier // 1.2 -> 1.56
+					ragfairConfig.dynamic.priceRanges.default.min *= config.EconomyOptions.Flea_Prices_Increased.multiplier // 0.8 -> 1.04
+					ragfairConfig.dynamic.priceRanges.default.max *= config.EconomyOptions.Flea_Prices_Increased.multiplier // 1.2 -> 1.56
 				} catch (error) {
-					logger.warning(`\nSetting ragfairConfig.dynamic.price.min/max failed because of another mod. Send bug report. Continue safely.`)
+					logger.warning(`\nSetting ragfairConfig.dynamic.priceRanges.default.min/max failed because of another mod. Send bug report. Continue safely.`)
 					log(error)
 				}
 
@@ -1402,8 +1403,9 @@ class Mod implements IPostDBLoadMod {
 					getBarterSchemeByItemAndCurrency(therapist, Items.BARTER_LEDX, Items.BARTER_USEC)
 						?.forEach((x) => (x.count /= 10)) // Really BSG? 160 kills for a non-FIR item? REALLY?!
 
-					getBarterSchemeByItemAndCurrency(peacekeeper, Items.CONTAINER_THICC_ITEM_CASE, Items.INFO_BLUE_FOLDERS)
-						?.forEach((x) => (x.count = x.count / 5 + 1))
+					// Commented out for now, as this barter is missing from 3.7.0
+					// getBarterSchemeByItemAndCurrency(peacekeeper, Items.CONTAINER_THICC_ITEM_CASE, Items.INFO_BLUE_FOLDERS)
+					// 	?.forEach((x) => (x.count = x.count / 5 + 1))
 					
 					getBarterSchemeByItemAndCurrency(skier, Items.CONTAINER_WEAPONS, Items.DRINK_MOONSHINE)
 						?.forEach((x) => (x.count = 4))
@@ -1888,39 +1890,40 @@ class Mod implements IPostDBLoadMod {
 					},
 				]
 
+				// Commented out for now, as doesn't exist in 3.7.0
 				// 7.62x39mm BP gzh
-				getCraft(Items.AMMO_762X39_BP).requirements = [
-					{
-						areaType: HideoutAreas.WORKBENCH,
-						requiredLevel: 3,
-						type: "Area",
-					},
-					{
-						templateId: Items.AMMO_762X39_PS,
-						count: 120,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.AMMO_762X39_US,
-						count: 120,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.BARTER_HAWK,
-						count: 1,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.SPECITEM_MULTITOOL,
-						type: "Tool",
-					},
-				]
+				// getCraft(Items.AMMO_762X39_BP).requirements = [
+				// 	{
+				// 		areaType: HideoutAreas.WORKBENCH,
+				// 		requiredLevel: 3,
+				// 		type: "Area",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_762X39_PS,
+				// 		count: 120,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_762X39_US,
+				// 		count: 120,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_HAWK,
+				// 		count: 1,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.SPECITEM_MULTITOOL,
+				// 		type: "Tool",
+				// 	},
+				// ]
 
 				// 9x19mm RIP
 				getCraft(Items.AMMO_9X19_RIP).requirements = [
@@ -2041,62 +2044,40 @@ class Mod implements IPostDBLoadMod {
 					},
 				]
 
+				// Commented out for now, as doesn't exist in 3.7.0
 				// 9x39mm SP-6 gs
-				getCraft(Items.AMMO_9X39_SP6).requirements = [
-					{
-						templateId: Items.AMMO_762X39_US,
-						count: 300,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.AMMO_9X19_PST,
-						count: 300,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.BARTER_HAWK,
-						count: 3,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						areaType: HideoutAreas.WORKBENCH,
-						requiredLevel: 2,
-						type: "Area",
-					},
-					{
-						templateId: Items.BARTER_TOOLSET,
-						type: "Tool",
-					},
-				]
-
-				// 9x39mm BP gs
-				//				getCraft(Items.AMMO_9X39_BP).requirements = [
-				//					{
-				//						templateId: Items.AMMO_9X39_SP6,
-				//						count: 160,
-				//						isFunctional: false,
-				//						isEncoded: false,
-				//						type: "Item",
-				//					},
-				//					{
-				//						templateId: Items.BARTER_HAWK,
-				//						count: 1,
-				//						isFunctional: false,
-				//						isEncoded: false,
-				//						type: "Item",
-				//					},
-				//					{
-				//						areaType: HideoutAreas.WORKBENCH,
-				//						requiredLevel: 3,
-				//						type: "Area",
-				//					},
-				//				]
+				// getCraft(Items.AMMO_9X39_SP6).requirements = [
+				// 	{
+				// 		templateId: Items.AMMO_762X39_US,
+				// 		count: 300,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_9X19_PST,
+				// 		count: 300,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_HAWK,
+				// 		count: 3,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		areaType: HideoutAreas.WORKBENCH,
+				// 		requiredLevel: 2,
+				// 		type: "Area",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_TOOLSET,
+				// 		type: "Tool",
+				// 	},
+				// ]
 
 				// 9x39mm SPP gs
 				getCraft(Items.AMMO_9X39_SPP).requirements = [
@@ -2165,43 +2146,45 @@ class Mod implements IPostDBLoadMod {
 						type: "Item",
 					},
 				]
+
+				// Commented out for now, as doesn't exist in 3.7.0
 				// 12/70 flechette
-				getCraft(Items.AMMO_12G_FLECHETTE).requirements = [
-					{
-						areaType: HideoutAreas.WORKBENCH,
-						requiredLevel: 1,
-						type: "Area",
-					},
-					{
-						templateId: Items.BARTER_METAL_TANK,
-						count: 1,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.BARTER_KITE,
-						count: 1,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.AMMO_12G_GRIZZLY_40,
-						count: 60,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.BARTER_MSCISSORS,
-						type: "Tool",
-					},
-					{
-						templateId: Items.SPECITEM_MULTITOOL,
-						type: "Tool",
-					},
-				]
+				// getCraft(Items.AMMO_12G_FLECHETTE).requirements = [
+				// 	{
+				// 		areaType: HideoutAreas.WORKBENCH,
+				// 		requiredLevel: 1,
+				// 		type: "Area",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_METAL_TANK,
+				// 		count: 1,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_KITE,
+				// 		count: 1,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_12G_GRIZZLY_40,
+				// 		count: 60,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_MSCISSORS,
+				// 		type: "Tool",
+				// 	},
+				// 	{
+				// 		templateId: Items.SPECITEM_MULTITOOL,
+				// 		type: "Tool",
+				// 	},
+				// ]
 
 				// 12/70 RIP
 				getCraft(Items.AMMO_12G_RIP).requirements.push({
@@ -2253,36 +2236,37 @@ class Mod implements IPostDBLoadMod {
 					}
 				})
 
+				// Commented out for now, as doesn't exist in 3.7.0
 				// .300 Blackout AP
-				getCraft(Items.AMMO_762X35_AP).requirements = [
-					{
-						areaType: HideoutAreas.WORKBENCH,
-						requiredLevel: 3,
-						type: "Area",
-					},
-					{
-						templateId: Items.BARTER_MASTER,
-						type: "Tool",
-					},
-					{
-						templateId: Items.BARTER_NIPPERS,
-						type: "Tool",
-					},
-					{
-						templateId: Items.AMMO_762X35_WHISPER,
-						count: 120,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-					{
-						templateId: Items.AMMO_762X51_M61,
-						count: 120,
-						isFunctional: false,
-						isEncoded: false,
-						type: "Item",
-					},
-				]
+				// getCraft(Items.AMMO_762X35_AP).requirements = [
+				// 	{
+				// 		areaType: HideoutAreas.WORKBENCH,
+				// 		requiredLevel: 3,
+				// 		type: "Area",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_MASTER,
+				// 		type: "Tool",
+				// 	},
+				// 	{
+				// 		templateId: Items.BARTER_NIPPERS,
+				// 		type: "Tool",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_762X35_WHISPER,
+				// 		count: 120,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// 	{
+				// 		templateId: Items.AMMO_762X51_M61,
+				// 		count: 120,
+				// 		isFunctional: false,
+				// 		isEncoded: false,
+				// 		type: "Item",
+				// 	},
+				// ]
 
 				// .366 TKM AP-M change
 				getCraft(Items.AMMO_366TKM_APM).requirements = [
@@ -2810,7 +2794,7 @@ class Mod implements IPostDBLoadMod {
 		// 	]
 		// }
 
-		function getBarterSchemeByItemAndCurrency(trader, resultItem, currency)
+		function getBarterSchemeByItemAndCurrency(trader: ITrader, resultItem, currency)
 		{
 			for (const item of trader.assort.items)
 			{
@@ -2826,7 +2810,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			logger.warning(`\ngetBarterSchemeByItemAndCurrency function failed bacause of the other mod. Ignore this error safely and continue. Send bug report.`)
-			log(trader)
+			log(trader.base._id)
 			log(resultItem)
 			log(currency)
 			return null;
