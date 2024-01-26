@@ -41,6 +41,9 @@ const fleaListingsWhitelist = loadConfig("../config/fleaListingsWhitelist.json5"
 const fleaBarterRequestsWhitelist = loadConfig("../config/fleaBarterRequestsWhitelist.json5");
 const fleaItemsWhiteList = loadConfig("../config/fleaItemsWhitelist.json5");
 const config = loadConfig("../config/config.json5");
+const collectorQuestPatch = loadConfig("../config/collectorQuestPatch.json5");
+const collectorRequirements = collectorQuestPatch.requirements;
+const collectorTableTextPatchEN = collectorQuestPatch.tableTextPatchEN;
 
 const debug = false // [Debug] Debug!
 
@@ -348,25 +351,17 @@ class Mod implements IPostDBLoadMod {
 					tables.hideout.production.push(alphaCase, betaCase, epsilonCase, gammaCase)
 
 					if (config.SecureContainersOptions.Progressive_Containers.Collector_Quest_Redone.enabled == true) {
-						// Add the surprise
-						tables.templates.quests[collectorQuest].conditions.AvailableForFinish.push({
-							_parent: "HandoverItem",
-							_props: {
-								dogtagLevel: 0,
-								id: "639135534b15ca31f76bc319",
-								index: 69, // nice
-								maxDurability: 100,
-								minDurability: 0,
-								parentId: "",
-								isEncoded: false,
-								onlyFoundInRaid: false,
-								dynamicLocale: false,
-								target: [Items.SECURE_GAMMA],
-								value: 2,
-								visibilityConditions: [],
-							},
-							dynamicLocale: false,
-						})
+						// Replace collectorQuest requirements with updated ones
+						logger.info(`[SPT-Softcore] Removing ${tables.templates.quests[collectorQuest].conditions.AvailableForFinish.length} entries from Collector quest conditions...`);
+						tables.templates.quests[collectorQuest].conditions.AvailableForFinish = [];
+						logger.info(`[SPT-Softcore] Adding ${collectorRequirements.length} entries to Collector quest conditions...`);
+						for (const condition of collectorRequirements) {
+							tables.templates.quests[collectorQuest].conditions.AvailableForFinish.push(condition);
+						}
+						logger.info(`[SPT-Softcore] Updating Collector quest item text...`);
+						for (const tableTextPatch of collectorTableTextPatchEN) {
+							tables.locales.global["en"][tableTextPatch.id] = tableTextPatch.text;
+						}
 
 						tables.locales.global["ru"]["639135534b15ca31f76bc319"] = "Передать носитель" // Тут нужен только фикс для русского, для всех остальных языков звучит как "Hand over the storage device"
 
