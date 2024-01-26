@@ -1450,7 +1450,7 @@ class Mod implements IPostDBLoadMod {
 					// Commented out for now, as this barter is missing from 3.7.0
 					// getBarterSchemeByItemAndCurrency(peacekeeper, Items.CONTAINER_THICC_ITEM_CASE, Items.INFO_BLUE_FOLDERS)
 					// 	?.forEach((x) => (x.count = x.count / 5 + 1))
-					
+
 					getBarterSchemeByItemAndCurrency(skier, Items.CONTAINER_WEAPONS, Items.DRINK_MOONSHINE)
 						?.forEach((x) => (x.count = 4))
 
@@ -2841,16 +2841,12 @@ class Mod implements IPostDBLoadMod {
 		// 	]
 		// }
 
-		function getBarterSchemeByItemAndCurrency(trader: ITrader, resultItem, currency)
-		{
-			for (const item of trader.assort.items)
-			{
+		function getBarterSchemeByItemAndCurrency(trader: ITrader, resultItem, currency) {
+			for (const item of trader.assort.items) {
 				if (item._tpl != resultItem) continue;
 
-				for (const scheme of trader.assort.barter_scheme[item._id][0])
-				{
-					if (scheme._tpl == currency)
-					{
+				for (const scheme of trader.assort.barter_scheme[item._id][0]) {
+					if (scheme._tpl == currency) {
 						return trader.assort.barter_scheme[item._id][0];
 					}
 				}
@@ -2873,16 +2869,12 @@ class Mod implements IPostDBLoadMod {
 			}
 		}
 
-		function getCraftByOutputAndInput(outputItem, inputItem)
-		{
-			for (const production of tables.hideout.production)
-			{
+		function getCraftByOutputAndInput(outputItem, inputItem) {
+			for (const production of tables.hideout.production) {
 				if (production.endProduct != outputItem || production.areaType == HideoutAreas.CHRISTMAS_TREE) continue;
 
-				for (const requirement of production.requirements)
-				{
-					if (requirement.templateId == inputItem)
-					{
+				for (const requirement of production.requirements) {
+					if (requirement.templateId == inputItem) {
 						return production;
 					}
 				}
