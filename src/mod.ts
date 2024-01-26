@@ -92,8 +92,11 @@ class Mod implements IPostDBLoadMod {
 			}
 		}
 
+		logger.info(`[SPT-Softcore] Starting...`);
 		if (config.SecureContainersOptions.enabled) {
+			logger.info(`[SPT-Softcore] SecureContainersOptions enabled`);
 			if (config.SecureContainersOptions.Bigger_Containers.enabled) {
+				logger.info(`[SPT-Softcore] Bigger Containers enabled`);
 				// Waist Pouch
 				items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.cellsV = 2
 				items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.cellsH = 4
@@ -120,6 +123,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.SecureContainersOptions.Progressive_Containers.enabled) {
+				logger.info(`[SPT-Softcore] Progressive Containers enabled`);
 				try {
 					// It seems Waist pouch does not protect againt in raid restrictions, so need to remove them alltogether.
 
@@ -131,6 +135,7 @@ class Mod implements IPostDBLoadMod {
 					// items[Items.SECURE_WAIST_POUCH]._props.Grids[0]._props.filters[0].ExcludedFilter.forEach(x => log(getItemName(x)))
 
 					try {
+						logger.info(`[SPT-Softcore] Prevent Secure Waist Puch from being dropped in raid`);
 						items[Items.SECURE_WAIST_POUCH]._props.CantRemoveFromSlotsDuringRaid[0] = "SecuredContainer"
 					} catch (error) {
 						logger.warning(`\nAdjusting Waist Pouch CantRemoveFromSlotsDuringRaid failed because of another mod. Send bug report. Continue safely.`)
@@ -348,9 +353,11 @@ class Mod implements IPostDBLoadMod {
 						needFuelForAllProductionTime: false
 					}
 
+					logger.info(`[SPT-Softcore] Adding progressive containers to hideout crafts...`);
 					tables.hideout.production.push(alphaCase, betaCase, epsilonCase, gammaCase)
 
 					if (config.SecureContainersOptions.Progressive_Containers.Collector_Quest_Redone.enabled == true) {
+						logger.info(`[SPT-Softcore] Collector Quest Redone enabled`);
 						// Replace collectorQuest requirements with updated ones
 						logger.info(`[SPT-Softcore] Removing ${tables.templates.quests[collectorQuest].conditions.AvailableForFinish.length} entries from Collector quest conditions...`);
 						tables.templates.quests[collectorQuest].conditions.AvailableForFinish = [];
@@ -396,8 +403,10 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.ScavCaseOptions.enabled) {
+			logger.info(`[SPT-Softcore] ScavCaseOptions enabled`);
 			try {
 				if (config.ScavCaseOptions.BetterRewards.enabled) {
+					logger.info(`[SPT-Softcore] BetterRewards enabled`);
 					// buyableitems generator, to make sure rare unbuyable items always are in reward pool (eg anodised red gear)
 					const buyableitems = new Set()
 					for (const trader of traderlist) {
@@ -466,6 +475,7 @@ class Mod implements IPostDBLoadMod {
 				}
 
 				if (config.ScavCaseOptions.Rebalance.enabled) {
+					logger.info(`[SPT-Softcore] Rebalance enabled`);
 					scavcaseConfig.rewardItemValueRangeRub = {
 						common: {
 							// AVG 7941
@@ -630,6 +640,7 @@ class Mod implements IPostDBLoadMod {
 					}
 				}
 				if (config.ScavCaseOptions.FasterScavcase.enabled) {
+					logger.info(`[SPT-Softcore] FasterScavcase enabled`);
 					try {
 						tables.hideout.scavcase.forEach((x) => {
 							if (debug) {
@@ -736,10 +747,12 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.HideoutOptions.enabled) {
+			logger.info(`[SPT-Softcore] HideoutOptions enabled`);
 			if (config.HideoutOptions.StashOptions.enabled) {
+				logger.info(`[SPT-Softcore] StashOptions enabled`);
 				// Fix for ADHD.
-
 				if (config.HideoutOptions.StashOptions.BiggerStash.enabled) {
+					logger.info(`[SPT-Softcore] BiggerStash enabled`);
 					try {
 						items[Items.STASH_STANDARD]._props.Grids[0]._props.cellsV = 50
 						items[Items.STASH_LEFTBEHIND]._props.Grids[0]._props.cellsV = 100
@@ -755,6 +768,7 @@ class Mod implements IPostDBLoadMod {
 
 				for (const stage in originalStages) {
 					if (config.HideoutOptions.StashOptions.Easier_Loyalty.enabled == true) {
+						logger.info(`[SPT-Softcore] Easier Loyalty enabled`);
 						try {
 							originalStages[stage].requirements
 								.filter((x) => x.loyaltyLevel != undefined)
@@ -768,6 +782,7 @@ class Mod implements IPostDBLoadMod {
 					}
 
 					if (config.HideoutOptions.StashOptions.Less_Currency_For_Construction.enabled == true) {
+						logger.info(`[SPT-Softcore] Less Currency For Construction enabled`);
 						try {
 							originalStages[stage].requirements
 								.filter((x) => x.templateId == Money.ROUBLES || x.templateId == Money.EUROS)
@@ -791,6 +806,7 @@ class Mod implements IPostDBLoadMod {
 				}
 
 				if (config.HideoutOptions.StashOptions.Progressive_Stash.enabled == true) {
+					logger.info(`[SPT-Softcore] Progressive Stash enabled`);
 					const basicStashBonuses = [
 						{
 							type: "StashSize",
@@ -848,11 +864,13 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.HideoutOptions.Faster_Crafting_Time.enabled && config.HideoutOptions.Faster_Crafting_Time.Hideout_Skill_Exp_Fix.enabled) {
+				logger.info(`[SPT-Softcore] Faster Crafting Time Hideout Skill Exp Fix enabled`);
 				// Buff to hideout exp rate, more testing needed
 				hideoutConfig.hoursForSkillCrafting /= config.HideoutOptions.Faster_Crafting_Time.Hideout_Skill_Exp_Fix.Hideout_Skill_Exp_Multiplier
 			}
 
 			if (config.HideoutOptions.Faster_Bitcoin_Farming.enabled) {
+				logger.info(`[SPT-Softcore] Faster Bitcoin Farming enabled`);
 				// Instead of modifing base farming time try this:
 				tables.hideout.settings.gpuBoostRate = config.HideoutOptions.Faster_Bitcoin_Farming.GPU_Efficiency
 
@@ -884,6 +902,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.HideoutOptions.Faster_Hideout_Construction.enabled) {
+				logger.info(`[SPT-Softcore] Faster Hideout Construction enabled`);
 				// 100x Faster hideout construction
 				for (const area in tables.hideout.areas) {
 					for (const stage in tables.hideout.areas[area].stages) {
@@ -895,13 +914,16 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.HideoutOptions.Increased_Fuel_Consumption.enabled) {
+				logger.info(`[SPT-Softcore] Increased Fuel Consumption enabled`);
 				// 10x faster fuel draw
 				tables.hideout.settings.generatorFuelFlowRate *= config.HideoutOptions.Increased_Fuel_Consumption.Fuel_Consumption_Multiplier
 			}
 		}
 
 		if (config.OtherTweaks.enabled) {
+			logger.info(`[SPT-Softcore] OtherTweaks enabled`);
 			if (config.OtherTweaks.Skill_Exp_Buffs.enabled) {
+				logger.info(`[SPT-Softcore] Skill Exp Buffs enabled`);
 				try {
 					globals.SkillsSettings.Vitality.DamageTakenAction *= 10
 					globals.SkillsSettings.Sniper.WeaponShotAction *= 10
@@ -916,6 +938,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Allow_Gym_Training_With_Muscle_Pain.enabled) {
+				logger.info(`[SPT-Softcore] Allow Gym Training With Muscle Pain enabled`);
 				try {
 					globals.Health.Effects.SevereMusclePain.GymEffectivity = 0.75
 				} catch (error) {
@@ -925,6 +948,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Bigger_Hideout_Containers.enabled) {
+				logger.info(`[SPT-Softcore] Bigger Hideout Containers enabled`);
 				try {
 					tables.templates.items[Items.CONTAINER_MEDICINE]._props.Grids[0]._props.cellsH = 10
 					tables.templates.items[Items.CONTAINER_MEDICINE]._props.Grids[0]._props.cellsV = 10
@@ -947,6 +971,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Remove_Discard_Limit.enabled) {
+				logger.info(`[SPT-Softcore] Remove Discard Limit enabled`);
 				try {
 					for (const i in items) {
 						const item = items[i]
@@ -963,6 +988,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Signal_Pistol_In_Special_Slots.enabled) {
+				logger.info(`[SPT-Softcore] Signal Pistol In Special Slots enabled`);
 				try {
 					items[Items.POCKETS_SPECIAL]._props.Slots.forEach((x) => x._props.filters[0].Filter.push(Items.SIGNALPISTOL_SP81))
 				} catch (error) {
@@ -972,6 +998,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Unexamined_Items_Are_Back_and_Faster_Examine_Time.enabled) {
+				logger.info(`[SPT-Softcore] Unexamined Items Are Back and Faster Examine Time enabled`);
 				try {
 					for (const itemID in items) {
 						const item = items[itemID]
@@ -989,6 +1016,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Remove_Backpack_Restrictions.enabled) {
+				logger.info(`[SPT-Softcore] Remove Backpack Restrictions enabled`);
 				// Remove backpack restrictions (for containers [ammo, med, etc] mostly).
 				// Never again I'll see an unlootable medcase in 314...
 				for (const itemID in items) {
@@ -1018,6 +1046,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Keytool_Buff.enabled) {
+				logger.info(`[SPT-Softcore] Keytool Buff enabled`);
 				// Other opinionated tweaks:
 				// keytool buff to make it 5x5
 				tables.templates.items[Items.CONTAINER_KEY_TOOL]._props.Grids[0]._props.cellsH = 5
@@ -1025,8 +1054,8 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.SICC_Case_Buff.enabled) {
+				logger.info(`[SPT-Softcore] SICC Case Buff enabled`);
 				// Huge buff to SICC case to make it actually not shit and a direct upgrade to Docs. And while we are here, allow it to hold keytool. It's Softcore, who cares.
-
 				try {
 					const mergeFilters = [
 						...new Set([
@@ -1044,6 +1073,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.OtherTweaks.Reshala_Always_Has_GoldenTT.enabled) {
+				logger.info(`[SPT-Softcore] Reshala Always Has GoldenTT enabled`);
 				// Reshala always has his Golden TT
 				tables.bots.types.bossbully.chances.equipment.Holster = 100
 				tables.bots.types.bossbully.inventory.equipment.Holster = {};
@@ -1052,6 +1082,7 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.InsuranceChanges.enabled) {
+			logger.info(`[SPT-Softcore] InsuranceChanges enabled`);
 			// Redo insurance. Prapor in an instant return with 50% chance, costs 10% of item value, Therapist has 2 hour return with 80% chance, costs 20%.
 			try {
 				prapor.base.insurance.min_return_hour = 0
@@ -1071,8 +1102,10 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.EconomyOptions.enabled) {
+			logger.info(`[SPT-Softcore] EconomyOptions enabled`);
 			// Ragfair changes:
 			if (config.EconomyOptions.Disable_Flea_Market_Completely.disable) {
+				logger.info(`[SPT-Softcore] Disable Flea Market Completely enabled`);
 				try {
 					globals.RagFair.minUserLevel = 99
 				} catch (error) {
@@ -1093,6 +1126,7 @@ class Mod implements IPostDBLoadMod {
 						const itemID = itemInHandbook.Id
 
 						if (prices[itemID] != undefined && config.EconomyOptions.Price_Rebalance.enabled) {
+							logger.info(`[SPT-Softcore] Price Rebalance enabled`);
 							// Change all Flea prices to handbook prices.
 							prices[itemID] = itemInHandbook.Price
 						}
@@ -1101,6 +1135,7 @@ class Mod implements IPostDBLoadMod {
 							(!fleaListingsWhitelist.includes(itemInHandbook.ParentId) && config.EconomyOptions.Pacifist_FleaMarket.enabled) ||
 							items[itemID]._props.QuestItem
 						) {
+							logger.info(`[SPT-Softcore] Pacifist FleaMarket enabled`);
 							// Ban everything on flea except whitelist handbook categories above.
 							ragfairConfig.dynamic.blacklist.custom.push(itemID) // Better semantics then CanSellOnRagfair
 							// items[itemID]._props.CanSellOnRagfair = false
@@ -1113,6 +1148,7 @@ class Mod implements IPostDBLoadMod {
 
 				try {
 					if (config.EconomyOptions.Price_Rebalance.enabled) {
+						logger.info(`[SPT-Softcore] Price Rebalance enabled`);
 						// Hardcode fix for important or unbalanced items. Too low prices can't convert to barters.
 						prices[Items.VISORS_RGLASSES] *= 5 // Round frame sunglasses
 						prices[Items.AMMO_40MMRU_VOG25] *= 5 // 40mm VOG-25 grenade
@@ -1129,6 +1165,7 @@ class Mod implements IPostDBLoadMod {
 				try {
 					// Unban random spawn only quest keys from flea, make them 2x expensive
 					if (config.EconomyOptions.Pacifist_FleaMarket.Enable_QuestKeys.enabled) {
+						logger.info(`[SPT-Softcore] Pacifist FleaMarket Enable QuestKeys enabled`);
 						for (const questKey of fleaItemsWhiteList.questKeys) {
 							prices[questKey] *= config.EconomyOptions.Pacifist_FleaMarket.Enable_QuestKeys.PriceMultiplier
 							ragfairConfig.dynamic.blacklist.custom = ragfairConfig.dynamic.blacklist.custom.filter((x) => x != items[questKey]._id) // Better semantics then CanSellOnRagfair
@@ -1142,6 +1179,7 @@ class Mod implements IPostDBLoadMod {
 
 				try {
 					if (config.EconomyOptions.Pacifist_FleaMarket.Enable_Whitelist.enabled) {
+						logger.info(`[SPT-Softcore] Pacifist FleaMarket Enable Whitelist enabled`);
 						// Unban whitelist
 						for (const item of fleaItemsWhiteList.itemWhitelist) {
 							ragfairConfig.dynamic.blacklist.custom = ragfairConfig.dynamic.blacklist.custom.filter((x) => x != items[item]._id) // Better semantics then CanSellOnRagfair
@@ -1155,6 +1193,7 @@ class Mod implements IPostDBLoadMod {
 
 				try {
 					if (config.EconomyOptions.Pacifist_FleaMarket.Enable_Marked_Keys.enabled) {
+						logger.info(`[SPT-Softcore] Pacifist FleaMarket Enable Marked Keys enabled`);
 						// Unban whitelist
 						for (const markedKey of fleaItemsWhiteList.markedKeys) {
 							prices[markedKey] *= config.EconomyOptions.Pacifist_FleaMarket.Enable_Marked_Keys.PriceMultiplier
@@ -1195,6 +1234,7 @@ class Mod implements IPostDBLoadMod {
 
 				try {
 					if (config.EconomyOptions.Flea_Pristine_Items.enabled == true) {
+						logger.info(`[SPT-Softcore] Flea Pristine Items enabled`);
 						// Only pristine items are offered on flea.
 						Object.values(ragfairConfig.dynamic.condition).forEach((x) => (x.min = 1)) // ._.
 					}
@@ -1204,6 +1244,7 @@ class Mod implements IPostDBLoadMod {
 				}
 
 				if (config.EconomyOptions.Only_Found_In_Raid_Items_Allowed_For_Barters.enabled == true) {
+					logger.info(`[SPT-Softcore] Only Found In Raid Items Allowed For Barters enabled`);
 					//Allow FIR only items for barters. This is default, so just in case. To make a point.
 					globals.RagFair.isOnlyFoundInRaidAllowed = true
 				} else {
@@ -1211,6 +1252,7 @@ class Mod implements IPostDBLoadMod {
 				}
 
 				if (config.EconomyOptions.Barter_Economy.enabled == true) {
+					logger.info(`[SPT-Softcore] Barter Economy enabled`);
 					try {
 						// Can only barter from items not in the blacklist. Only allows base classes, and not itemIDs =(
 						// To diable barter requests for individual item, its flea price should be set to 2, like in the code below.
@@ -1226,8 +1268,10 @@ class Mod implements IPostDBLoadMod {
 						BSGblacklist.filter((x) => {
 							// dirty hack to block BSG blacklisted items (dogtags, bitcoins, ornaments and others) from barters, since you can't buy them on flea anyway, so it should not matter.
 							if (x == Items.BARTER_02BTC && config.EconomyOptions.Barter_Economy.Unban_Bitcoins_For_Barters.enabled == true) {
+								logger.info(`[SPT-Softcore] Unban Bitcoins For Barters enabled - do nothing`);
 								// do nothing
 							} else if (!fleaBarterRequestBlacklist.includes(items[x]._parent)) {
+								logger.info(`[SPT-Softcore] Unban Bitcoins For Barters disabled`);
 								// Only mod items in categories ALLOWED on flea request list
 								// Actually, I could have just hardcoded this lol. By default it's just Cristmass ornaments, dogtags and bitcoins.
 								// 2 is used to pass getFleaPriceForItem check and not trigger generateStaticPrices
@@ -1263,7 +1307,9 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.TraderChanges.enabled) {
+			logger.info(`[SPT-Softcore] Trader Changes enabled`);
 			if (config.TraderChanges.Better_Sales_To_Traders.enabled) {
+				logger.info(`[SPT-Softcore] Better Sales To Traders enabled`);
 				if (debug) {
 					for (const trader in traderlist) {
 						log(`${traderlist[trader].base.nickname}.base.items_buy = {`)
@@ -1310,6 +1356,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.TraderChanges.Alternative_Categories.enabled) {
+				logger.info(`[SPT-Softcore] Alternative Categories enabled`);
 				try {
 					therapist.base.items_buy.category = [
 						BaseClasses.MEDS,
@@ -1332,6 +1379,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.TraderChanges.Skier_Uses_Euros.enabled) {
+				logger.info(`[SPT-Softcore] Skier Uses Euros enabled`);
 				try {
 					// WIP
 					skier.base.currency = "EUR"
@@ -1370,6 +1418,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.TraderChanges.Reasonably_Priced_Cases.enabled == true) {
+				logger.info(`[SPT-Softcore] Reasonably Priced Cases enabled`);
 				try {
 					getBarterSchemeByItemAndCurrency(therapist, Items.CONTAINER_THICC_ITEM_CASE, Items.BARTER_LEDX)
 						?.forEach((x) => (x.count = 5));
@@ -1417,6 +1466,7 @@ class Mod implements IPostDBLoadMod {
 			}
 
 			if (config.TraderChanges.Pacifist_Fence.enabled == true) {
+				logger.info(`[SPT-Softcore] Pacifist Fence enabled`);
 				try {
 					// Add BSGblacklist and mod custom blacklist to Fence blacklists
 					let fenceBlacklist = []
@@ -1448,6 +1498,7 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.CraftingRebalance.enabled == true) {
+			logger.info(`[SPT-Softcore] Crafting Rebalance enabled`);
 			// Crafts:
 			// This here, is some dumb stuff, I should've created some special class, controller, pushed the data out of the code or some other OOP bullcrap, but I'm not a programmer, so this will have to suffice. Sorry, not sorry.
 
@@ -2358,6 +2409,7 @@ class Mod implements IPostDBLoadMod {
 		}
 
 		if (config.AdditionalCraftingRecipes.enabled == true) {
+			logger.info(`\nAdditionalCraftingRecipes enabled. Adding recipes...`)
 			try {
 				// 63da4dbee8fa73e225000001
 				// 63da4dbee8fa73e225000002
