@@ -387,7 +387,7 @@ class Mod implements IPostDBLoadMod {
 									parentId: "",
 									isEncoded: false,
 									dynamicLocale: false,
-									value: 20,
+									value: config.SecureContainersOptions.Progressive_Containers.Collector_Quest_Redone.questLevel,
 									compareMethod: ">=",
 									visibilityConditions: [],
 								},

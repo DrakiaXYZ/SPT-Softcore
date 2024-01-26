@@ -9,11 +9,12 @@
 		"Progressive_Containers": {
 			"enabled": true,
 
-			// Collector quest is startable just at level 20. No longer you need all other quests done, only items. 
+			// Collector quest is startable just at level 20 (configurable). No longer you need all other quests done, only items.
 			// BUT, don't think it's going to be easy, there is an additional end-game grind ending condition waiting 
 			// for you. Should be much more fun then vanilla 'grind to level 55, duh'.
 			"Collector_Quest_Redone": {
-				"enabled": true
+				"enabled": true,
+				"questLevel": 1
 			}
 		},
 
